@@ -33,18 +33,17 @@ app.get('/status/motor', async (req, res) => {
 });
 //____________________________________________________________________________________________________
 
-app.get('/status/gas', async (req, res) => {
+app.put('/update/gas', async (req, res) => {
   try {
-    const doc = await db.collection('Rasberry Pi').doc('User001').get();
+    const { gas } = req.body;
 
-    if (!doc.exists) {
-      return res.status(404).json({ message: 'Document not found' });
+    if (gas === undefined) {
+      return res.status(400).json({ message: 'No fields to update. Send gas value' });
     }
 
-    const data = doc.data();
-    const gasValue = data.gas;
+    await db.collection('Rasberry Pi').doc('User001').update({ gas });
 
-    res.json({ gas: gasValue });
+    res.json({ message: 'Updated successfully', updated: gas });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -55,11 +54,11 @@ app.put('/update/motor', async (req, res) => {
   try {
     const { motor } = req.body;
 
-    if (Object.keys(motor).length === 0) {
+    if (motor === undefined) {
       return res.status(400).json({ message: 'No fields to update. Send motor value' });
     }
 
-    await db.collection('Rasberry Pi').doc('User001').update(motor);
+    await db.collection('Rasberry Pi').doc('User001').update({ motor });
 
     res.json({ message: 'Updated successfully', updated: motor });
   } catch (error) {
