@@ -1,13 +1,13 @@
 import notifee, { TriggerType, RepeatFrequency, AndroidImportance } from '@notifee/react-native';
 
-const CHANNEL_ID = 'bluecurrent-alarms';
+const CHANNEL_ID = 'bluecurrent-tasks';
 
 // Create notification channel (required for Android)
 async function ensureChannel() {
   await notifee.createChannel({
     id: CHANNEL_ID,
-    name: 'Alarm Notifications',
-    importance: AndroidImportance.HIGH,
+    name: 'Scheduled Tasks',
+    importance: AndroidImportance.HIGH, 
     sound: 'default',
   });
 }
@@ -61,18 +61,21 @@ export async function scheduleNotification(schedule) {
 
   const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-  let body = 'It\'s time for your scheduled task!';
+  let body = 'Executing scheduled task to turn on motor...';
   if (schedule.type === 'everyday') {
-    body = 'Daily alarm - Time for your scheduled task!';
+    body = 'Executing daily task: Turning on motor.';
   } else if (schedule.type === 'weekly') {
-    body = `Weekly alarm (${DAYS[schedule.day]}) - Time for your scheduled task!`;
+    body = `Weekly schedule (${DAYS[schedule.day]}): Turning on motor.`;
   } else if (schedule.type === 'particular') {
-    body = `Alarm for ${schedule.date}/${schedule.month}/${schedule.year} - Time for your scheduled task!`;
+    body = `Task for ${schedule.date}/${schedule.month}/${schedule.year}: Turning on motor.`;
   }
 
   const trigger = {
     type: TriggerType.TIMESTAMP,
     timestamp: triggerDate.getTime(),
+    alarmManager: {
+      allowWhileIdle: true,
+    },
   };
 
   // For everyday alarms, repeat daily
@@ -88,13 +91,13 @@ export async function scheduleNotification(schedule) {
   await notifee.createTriggerNotification(
     {
       id: String(schedule.id),
-      title: '⏰ Alarm!',
+      title: '🔌 Motor Schedule',
       body: body,
       android: {
         channelId: CHANNEL_ID,
-        importance: AndroidImportance.HIGH,
+        importance: AndroidImportance.HIGH, 
         pressAction: { id: 'default' },
-        sound: 'default',
+        smallIcon: 'ic_launcher', // fallback icon 
       },
       data: {
         scheduleId: String(schedule.id),

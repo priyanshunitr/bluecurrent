@@ -53,6 +53,7 @@ app.put('/update/gas', async (req, res) => {
 app.put('/update/motor', async (req, res) => {
   try {
     const { motor } = req.body;
+    console.log(`Received motor update request: motor = ${motor} at ${new Date().toISOString()}`);
 
     if (motor === undefined) {
       return res.status(400).json({ message: 'No fields to update. Send motor value' });

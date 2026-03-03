@@ -30,7 +30,7 @@ export default function AlarmModal({ showModal, setShowModal, activeAlarm, remov
               {activeAlarm.hour.toString().padStart(2, '0')}:
               {activeAlarm.minute.toString().padStart(2, '0')}
             </Text>
-            <Text style={styles.modalMessage}>It's time for your scheduled task!</Text>
+            <Text style={styles.modalMessage}>Motor has been turned on!</Text>
             <Text style={styles.modalType}>
               {activeAlarm.type === 'weekly' ? `Every ${DAYS[activeAlarm.day]}` : 
                activeAlarm.type === 'particular' ? `${activeAlarm.date}/${activeAlarm.month}/${activeAlarm.year}` : 'Everyday'}

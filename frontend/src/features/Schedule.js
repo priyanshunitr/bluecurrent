@@ -91,6 +91,24 @@ export default function Schedule() {
             triggeredAlarms.current.add(alarmKey);
             setActiveAlarm(s);
             setShowModal(true);
+            
+            console.log(`Schedule triggered for alarm ${alarmKey}, turning motor ON...`);
+            
+            fetch('http://10.0.2.2:3000/update/motor', {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ motor: true }),
+            })
+              .then(res => res.json())
+              .then(data => {
+                console.log('Motor updated to true:', data);
+              })
+              .catch(err => {
+                console.error('Error updating motor:', err);
+                Alert.alert('Task Error', 'Failed to update motor.');
+              });
           }
         }
       });
@@ -134,7 +152,7 @@ export default function Schedule() {
     // Schedule native notification
     await scheduleNotification(newSchedule);
 
-    Alert.alert('Success', 'Alarm set!');
+    Alert.alert('Success', 'Motor schedule set!');
   }, [hour, minute, type, selectedDay, date, schedules]);
 
   const removeSchedule = useCallback(async (id) => {
