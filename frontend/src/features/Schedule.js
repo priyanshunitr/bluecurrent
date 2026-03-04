@@ -4,6 +4,9 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  Text,
+  TouchableOpacity,
+  TextInput,
 } from 'react-native';
 
 import ClockDisplay from '../components/Schedule/ClockDisplay';
@@ -20,6 +23,23 @@ export default function Schedule() {
   const [schedules, setSchedules] = useState([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [loaded, setLoaded] = useState(false);
+  
+  // Timer and Motor state
+  const [duration, setDuration] = useState('');
+  const [motorState, setMotorState] = useState(false);
+  const [manualDuration, setManualDuration] = useState('');
+  const [activeTurnOffTime, setActiveTurnOffTime] = useState(null);
+
+  const fetchMotorStatus = useCallback(async () => {
+    try {
+      const res = await fetch(`${LOCAL_HOST}/status/motor`);
+      const data = await res.json();
+      setMotorState(data.motor);
+      setActiveTurnOffTime(data.motorTurnOffTime);
+    } catch (e) {
+      console.log('Failed to fetch motor status', e);
+    }
+  }, []);
 
   // Load persisted schedules on mount & re-schedule native notifications
   useEffect(() => {
@@ -28,6 +48,7 @@ export default function Schedule() {
         const response = await fetch(`${LOCAL_HOST}/get/schedules`);
         const data = await response.json();
         const saved = data.schedules || [];
+        await fetchMotorStatus();
         
         // Filter out particular-day alarms that are already in the past
         const now = new Date();
@@ -58,18 +79,22 @@ export default function Schedule() {
     })();
   }, []);
 
-  // Heartbeat: Update clock and check for in-app UI alerts
+  // Heartbeat: Update clock and check for motor status periodically
   useEffect(() => {
+    let tick = 0;
     const interval = setInterval(() => {
       const now = new Date();
       setCurrentTime(now);
-
-      const currentH = now.getHours();
-      const currentM = now.getMinutes();
+      
+      tick++;
+      // Poll motor status from backend every 5 seconds
+      if (tick % 5 === 0) {
+        fetchMotorStatus();
+      }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [schedules]);
+  }, [fetchMotorStatus]);
 
   const addSchedule = useCallback(async () => {
     const h = parseInt(hour);
@@ -89,12 +114,14 @@ export default function Schedule() {
       date: parseInt(date.d) || 0,
       month: parseInt(date.m) || 0,
       year: parseInt(date.y) || 0,
+      duration: parseInt(duration) || 0,
     };
 
     const updated = [...schedules, newSchedule];
     setSchedules(updated);
     setHour('');
     setMinute('');
+    setDuration('');
 
     // Persist to backend
     try {
@@ -130,12 +157,60 @@ export default function Schedule() {
     <ScrollView contentContainerStyle={styles.container}>
       <ClockDisplay currentTime={currentTime} />
       
+      <View style={styles.motorCard}>
+        <Text style={styles.motorTitle}>Motor Control</Text>
+        <Text style={styles.motorStatusText}>
+          Status: <Text style={motorState ? styles.onText : styles.offText}>{motorState ? 'ON' : 'OFF'}</Text>
+        </Text>
+        
+        {motorState && activeTurnOffTime && (
+          <Text style={styles.timerInfo}>
+            Auto Turn Off: {new Date(activeTurnOffTime).toLocaleTimeString()}
+          </Text>
+        )}
+
+        {!motorState && (
+          <TextInput 
+            style={styles.manualDurationInput}
+            placeholder="Duration (Minutes) - Optional"
+            value={manualDuration}
+            onChangeText={setManualDuration}
+            keyboardType="numeric"
+          />
+        )}
+        
+        <TouchableOpacity 
+          style={[styles.motorToggleBtn, motorState ? styles.btnStop : styles.btnStart]} 
+          onPress={async () => {
+            const desiredState = !motorState;
+            const dur = desiredState && manualDuration ? parseInt(manualDuration) : 0;
+            
+            try {
+              const res = await fetch(`${LOCAL_HOST}/update/motor`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ motor: desiredState, duration: dur }),
+              });
+              const data = await res.json();
+              setMotorState(data.updated);
+              setActiveTurnOffTime(data.motorTurnOffTime);
+              if (!desiredState) setManualDuration('');
+            } catch (e) {
+              Alert.alert('Error', 'Failed to toggle motor');
+            }
+          }}
+        >
+          <Text style={styles.btnText}>{motorState ? 'Turn Motor OFF' : 'Turn Motor ON'}</Text>
+        </TouchableOpacity>
+      </View>
+
       <AlarmForm 
         hour={hour} setHour={setHour}
         minute={minute} setMinute={setMinute}
         type={type} setType={setType}
         selectedDay={selectedDay} setSelectedDay={setSelectedDay}
         date={date} setDate={setDate}
+        duration={duration} setDuration={setDuration}
         addSchedule={addSchedule}
       />
 
@@ -154,4 +229,52 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     minHeight: '100%',
   },
+  motorCard: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 25,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    alignItems: 'center',
+  },
+  motorTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#334155',
+    marginBottom: 5,
+  },
+  motorStatusText: {
+    fontSize: 16,
+    color: '#64748b',
+    marginBottom: 15,
+  },
+  onText: { color: '#10b981', fontWeight: 'bold' },
+  offText: { color: '#ef4444', fontWeight: 'bold' },
+  timerInfo: {
+    fontSize: 14,
+    color: '#0284c7',
+    marginBottom: 15,
+    fontWeight: '600',
+  },
+  manualDurationInput: {
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
+    padding: 10,
+    width: '80%',
+    borderRadius: 8,
+    textAlign: 'center',
+    marginBottom: 15,
+    backgroundColor: '#fff',
+  },
+  motorToggleBtn: {
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 8,
+    width: '80%',
+    alignItems: 'center',
+  },
+  btnStart: { backgroundColor: '#3b82f6' },
+  btnStop: { backgroundColor: '#ef4444' },
+  btnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
 });

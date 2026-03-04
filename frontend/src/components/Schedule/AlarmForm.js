@@ -9,6 +9,7 @@ export default function AlarmForm({
   type, setType,
   selectedDay, setSelectedDay,
   date, setDate,
+  duration, setDuration,
   addSchedule
 }) {
   return (
@@ -28,6 +29,16 @@ export default function AlarmForm({
           style={styles.input}
           value={minute}
           onChangeText={setMinute}
+          keyboardType="numeric"
+        />
+      </View>
+
+      <View style={styles.inputRow}>
+        <TextInput
+          placeholder="Duration (Minutes) - Optional"
+          style={styles.durationInput}
+          value={duration}
+          onChangeText={setDuration}
           keyboardType="numeric"
         />
       </View>
@@ -120,6 +131,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     textAlign: 'center',
     fontSize: 16,
+  },
+  durationInput: {
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
+    padding: 12,
+    width: '80%',
+    borderRadius: 8,
+    textAlign: 'center',
+    fontSize: 14,
   },
   dateInput: {
     borderWidth: 1.5,

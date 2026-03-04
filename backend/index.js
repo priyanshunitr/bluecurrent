@@ -25,8 +25,10 @@ app.get('/status/motor', async (req, res) => {
 
     const data = doc.data();
     const motorValue = data.motor;
-
-    res.json({ motor: motorValue });
+    const motorTurnOffTime = data.motorTurnOffTime;
+    
+    // Also send back active timer info if needed for frontend display
+    res.json({ motor: motorValue, motorTurnOffTime: motorTurnOffTime || null });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -52,16 +54,23 @@ app.put('/update/gas', async (req, res) => {
 
 app.put('/update/motor', async (req, res) => {
   try {
-    const { motor } = req.body;
-    console.log(`Received motor update request: motor = ${motor} at ${new Date().toISOString()}`);
+    const { motor, duration } = req.body;
+    console.log(`Received motor update request: motor = ${motor}, duration = ${duration} at ${new Date().toISOString()}`);
 
     if (motor === undefined) {
       return res.status(400).json({ message: 'No fields to update. Send motor value' });
     }
 
-    await db.collection('Rasberry Pi').doc('User001').update({ motor });
+    let updates = { motor };
+    if (motor === true && duration > 0) {
+      updates.motorTurnOffTime = new Date().getTime() + (duration * 60000); // duration in minutes to ms
+    } else {
+      updates.motorTurnOffTime = null; // Clear any existing timer
+    }
 
-    res.json({ message: 'Updated successfully', updated: motor });
+    await db.collection('Rasberry Pi').doc('User001').update(updates);
+
+    res.json({ message: 'Updated successfully', updated: motor, motorTurnOffTime: updates.motorTurnOffTime });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -109,7 +118,17 @@ const checkSchedules = async () => {
     const currentYear = now.getFullYear();
 
     let motorChanged = false;
+    let newMotorState = data.motor;
+    let newMotorTurnOffTime = data.motorTurnOffTime;
     let updatedSchedules = [...schedules];
+
+    // 1. Check if the active timer has finished
+    if (data.motor === true && data.motorTurnOffTime && now.getTime() >= data.motorTurnOffTime) {
+      console.log('[Backend Scheduler] Timer finished. Turning motor OFF.');
+      newMotorState = false;
+      newMotorTurnOffTime = null;
+      motorChanged = true;
+    }
 
     for (let i = 0; i < schedules.length; i++) {
       const s = schedules[i];
@@ -131,19 +150,29 @@ const checkSchedules = async () => {
 
         if (trigger) {
           console.log(`[Backend Scheduler] Trigger hit for schedule ${s.id}. Turning motor ON.`);
+          newMotorState = true;
           motorChanged = true;
+          
+          if (s.duration && s.duration > 0) {
+            newMotorTurnOffTime = now.getTime() + (s.duration * 60000);
+          } else {
+            newMotorTurnOffTime = null;
+          }
         }
       }
     }
 
+    let dbUpdates = {};
+    if (updatedSchedules.length !== schedules.length) {
+      dbUpdates.schedules = updatedSchedules;
+    }
     if (motorChanged) {
-      await db.collection('Rasberry Pi').doc('User001').update({ 
-        motor: true,
-        schedules: updatedSchedules // Save updated list in case a 'particular' was removed
-      });
-    } else if (updatedSchedules.length !== schedules.length) {
-       // Just update schedules if a particular expired but didn't trigger (cleanup)
-       await db.collection('Rasberry Pi').doc('User001').update({ schedules: updatedSchedules });
+      dbUpdates.motor = newMotorState;
+      dbUpdates.motorTurnOffTime = newMotorTurnOffTime;
+    }
+
+    if (Object.keys(dbUpdates).length > 0) {
+      await db.collection('Rasberry Pi').doc('User001').update(dbUpdates);
     }
 
   } catch (error) {

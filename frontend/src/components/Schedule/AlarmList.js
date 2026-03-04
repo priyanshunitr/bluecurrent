@@ -18,6 +18,11 @@ export default function AlarmList({ schedules, removeSchedule }) {
               {s.type === 'weekly' ? `Every ${DAYS[s.day]}` : 
                s.type === 'particular' ? `${s.date}/${s.month}/${s.year}` : 'Everyday'}
             </Text>
+            {s.duration > 0 && (
+              <Text style={styles.itemDuration}>
+                Runs for: {s.duration} min
+              </Text>
+            )}
           </View>
           <TouchableOpacity onPress={() => removeSchedule(s.id)}>
             <Text style={styles.removeText}>Remove</Text>
@@ -64,6 +69,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#64748b',
     marginTop: 2,
+  },
+  itemDuration: {
+    fontSize: 12,
+    color: '#0ea5e9',
+    marginTop: 2,
+    fontWeight: '500',
   },
   removeText: {
     color: '#f43f5e',
