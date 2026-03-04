@@ -54,23 +54,33 @@ app.put('/update/gas', async (req, res) => {
 
 app.put('/update/motor', async (req, res) => {
   try {
-    const { motor, duration } = req.body;
-    console.log(`Received motor update request: motor = ${motor}, duration = ${duration} at ${new Date().toISOString()}`);
+    const { motor, durationSeconds } = req.body;
+    console.log(`Received motor update request: motor = ${motor} at ${new Date().toISOString()}`);
 
     if (motor === undefined) {
       return res.status(400).json({ message: 'No fields to update. Send motor value' });
     }
 
-    let updates = { motor };
-    if (motor === true && duration > 0) {
-      updates.motorTurnOffTime = new Date().getTime() + (duration * 60000); // duration in minutes to ms
-    } else {
-      updates.motorTurnOffTime = null; // Clear any existing timer
+    const updatePayload = { motor };
+
+    if (motor === true && durationSeconds && durationSeconds > 0) {
+      // Turning ON with a timer — set absolute expiry
+      updatePayload.timerEndsAt = Date.now() + durationSeconds * 1000;
+      console.log(`[Motor] Timer set: will auto-off in ${durationSeconds}s`);
+    } else if (motor === true) {
+      // Turning ON WITHOUT a timer — clear any stale timerEndsAt so checkTimer
+      // doesn't see an old expired timestamp and immediately shut the motor off
+      updatePayload.timerEndsAt = null;
+      console.log('[Motor] Turned ON (no timer), cleared any stale timerEndsAt.');
+    } else if (motor === false) {
+      // Turning OFF manually — clear any running timer
+      updatePayload.timerEndsAt = null;
+      console.log('[Motor] Turned OFF manually, timer cleared.');
     }
 
-    await db.collection('Rasberry Pi').doc('User001').update(updates);
+    await db.collection('Rasberry Pi').doc('User001').update(updatePayload);
 
-    res.json({ message: 'Updated successfully', updated: motor, motorTurnOffTime: updates.motorTurnOffTime });
+    res.json({ message: 'Updated successfully', updated: motor, timerEndsAt: updatePayload.timerEndsAt || null });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -92,6 +102,63 @@ app.put('/update/schedules', async (req, res) => {
     const { schedules } = req.body;
     await db.collection('Rasberry Pi').doc('User001').update({ schedules });
     res.json({ message: 'Schedules updated successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+//____________________________________________________________________________________________________
+
+// POST /timer/start  { durationSeconds: number }
+// Turns motor ON and saves the absolute expiry timestamp to Firestore.
+app.post('/timer/start', async (req, res) => {
+  try {
+    const { durationSeconds } = req.body;
+    if (!durationSeconds || durationSeconds <= 0) {
+      return res.status(400).json({ message: 'Send a positive durationSeconds value.' });
+    }
+
+    const timerEndsAt = Date.now() + durationSeconds * 1000;
+
+    await db.collection('Rasberry Pi').doc('User001').update({
+      motor: true,
+      timerEndsAt,
+    });
+
+    console.log(`[Timer] Started: motor ON, ends at ${new Date(timerEndsAt).toISOString()}`);
+    res.json({ message: 'Timer started, motor ON', timerEndsAt });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /timer/cancel
+// Turns motor OFF and removes the timer from Firestore.
+app.post('/timer/cancel', async (req, res) => {
+  try {
+    await db.collection('Rasberry Pi').doc('User001').update({
+      motor: false,
+      timerEndsAt: null,
+    });
+    console.log('[Timer] Cancelled: motor OFF, timer cleared.');
+    res.json({ message: 'Timer cancelled, motor OFF' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /timer/status
+// Returns remaining seconds. secondsLeft === 0 means no active timer.
+app.get('/timer/status', async (req, res) => {
+  try {
+    const doc = await db.collection('Rasberry Pi').doc('User001').get();
+    if (!doc.exists) return res.json({ secondsLeft: 0, timerEndsAt: null });
+
+    const { timerEndsAt } = doc.data();
+    if (!timerEndsAt) return res.json({ secondsLeft: 0, timerEndsAt: null });
+
+    const secondsLeft = Math.max(0, Math.ceil((timerEndsAt - Date.now()) / 1000));
+    res.json({ secondsLeft, timerEndsAt });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -180,8 +247,32 @@ const checkSchedules = async () => {
   }
 };
 
-// Run check every 30 seconds
+// Run schedule check every 30 seconds
 setInterval(checkSchedules, 30000);
+
+// ── Backend Timer Checker ─────────────────────────────────────────────────────
+// Runs every second. When timerEndsAt is reached, turns motor OFF and clears timer.
+const checkTimer = async () => {
+  try {
+    const doc = await db.collection('Rasberry Pi').doc('User001').get();
+    if (!doc.exists) return;
+
+    const { timerEndsAt } = doc.data();
+    if (!timerEndsAt) return;
+
+    if (Date.now() >= timerEndsAt) {
+      console.log('[Timer] Timer expired. Turning motor OFF.');
+      await db.collection('Rasberry Pi').doc('User001').update({
+        motor: false,
+        timerEndsAt: null,
+      });
+    }
+  } catch (error) {
+    console.error('[Timer] Error in checkTimer:', error.message);
+  }
+};
+
+setInterval(checkTimer, 1000);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
