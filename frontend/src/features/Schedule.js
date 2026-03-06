@@ -124,7 +124,7 @@ const Schedule = () => {
                         <ChevronLeft color="#0F172A" size={24} />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Schedule Manager</Text>
-                    <View style={{width: 40}} /> {/* Spacer */}
+                    <View style={{width: 40}} />
                 </View>
 
                 <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>

@@ -146,7 +146,7 @@ const Timer = () => {
                         <ChevronLeft color="#0F172A" size={24} />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Motor Timer</Text>
-                    <View style={{width: 40}} /> 
+                    <View style={{width: 40}} />
                 </View>
 
                 <ScrollView contentContainerStyle={styles.scrollContent}>
