@@ -53,7 +53,7 @@ const ScheduleItem = ({ icon: Icon, title, subtitle, tasks }) => (
             <Text style={styles.scheduleTitle}>{title}</Text>
             <Text style={styles.scheduleSubtitle}>{subtitle}</Text>
         </View>
-        <Text style={styles.scheduleTasks}>{tasks} tasks</Text>
+        <Text style={styles.scheduleTasks}>{tasks} {tasks === "1" ? "task" : "tasks"}</Text>
     </View>
 );
 
@@ -211,7 +211,7 @@ const MotorDetails = () => {
                                 icon={s.type === 'everyday' ? CalendarDays : s.type === 'weekly' ? CalendarIcon : Star} 
                                 title={s.type.charAt(0).toUpperCase() + s.type.slice(1)} 
                                 subtitle={getScheduleSubtitle(s)} 
-                                tasks={s.duration ? "2" : "1"} 
+                                tasks="1" 
                             />
                         </React.Fragment>
                     ))
