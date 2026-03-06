@@ -4,6 +4,7 @@ import {
     validateLinkInput,
     validateGasUpdateInput,
     validateMotorUpdateInput,
+    validateSchedulesInput,
 } from '../schemas/motorSchema.js';
 import {
     linkMotor,
@@ -135,14 +136,13 @@ router.get('/:hexcode/schedules', verifyToken, async (req, res) => {
  * Body: { schedules: Array }
  */
 router.put('/:hexcode/schedules', verifyToken, async (req, res) => {
-    const { schedules } = req.body;
-
-    if (!Array.isArray(schedules)) {
-        return res.status(400).json({ error: 'schedules must be an array.' });
+    const validationError = validateSchedulesInput(req.body.schedules);
+    if (validationError) {
+        return res.status(400).json({ error: validationError });
     }
 
     try {
-        await updateSchedules(req.user.username, req.params.hexcode, schedules);
+        await updateSchedules(req.user.username, req.params.hexcode, req.body.schedules);
         return res.status(200).json({ message: 'Schedules updated successfully.' });
     } catch (err) {
         return res.status(err.statusCode || 500).json({ error: err.message });
