@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { NativeRouter, Route, Routes } from 'react-router-native';
 import {
   StatusBar,
   StyleSheet,
@@ -11,6 +12,8 @@ import {
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Timer from './src/features/Timer';
 import Schedule from './src/features/Schedule';
+import Home from './src/features/Home';
+import MotorDetails from './src/features/MotorDetails';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -18,7 +21,14 @@ function App() {
   return (
     <SafeAreaProvider>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <Schedule />
+      <NativeRouter>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/motor/:id" element={<MotorDetails />} />
+          <Route path="/schedule" element={<Schedule />} />
+          <Route path="/timer" element={<Timer />} />
+        </Routes>
+      </NativeRouter>
     </SafeAreaProvider>
   );
 }
