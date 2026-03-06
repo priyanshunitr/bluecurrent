@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = 'http://10.0.2.2:3000'; // android emulator local host
+const API_URL = process.env.API_URL || 'http://10.0.2.2:3000'; // Fallback to local emulator
 
 /**
  * ── AUTH SERVICES ──
