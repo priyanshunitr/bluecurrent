@@ -16,8 +16,24 @@ const serviceAccountPath = path.resolve(__dirname, rawPath);
 let db;
 
 try {
-  // Load the service account key JSON file
-  const serviceAccount = require(serviceAccountPath);
+  let serviceAccount;
+
+  // 1. Try to load from environment variable string (preferred for Render/Heroku)
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    try {
+      serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    } catch (parseError) {
+      console.warn('Failed to parse FIREBASE_SERVICE_ACCOUNT env variable as JSON.');
+    }
+  }
+
+  // 2. Fallback: Load from file if env variable wasn't provided or failed to parse
+  if (!serviceAccount) {
+    const rawPath = process.env.FIREBASE_CREDENTIALS_PATH || './serviceAccountKey.json';
+    const serviceAccountPath = path.resolve(__dirname, rawPath);
+    serviceAccount = require(serviceAccountPath);
+    console.log(`Firebase loading from file: ${serviceAccountPath}`);
+  }
 
   if (!admin.apps.length) {
     admin.initializeApp({
@@ -26,9 +42,9 @@ try {
   }
 
   db = admin.firestore();
-  console.log(`Firebase initialized with credentials from ${serviceAccountPath}`);
+  console.log('Firebase initialized successfully!');
 } catch (error) {
-  console.error(`Warning: Could not load ${serviceAccountPath} or initialize Firebase.`, error.message);
+  console.error('CRITICAL: Firebase initialization failed.', error.message);
   db = null;
 }
 
