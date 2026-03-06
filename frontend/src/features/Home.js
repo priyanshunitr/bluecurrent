@@ -1,8 +1,10 @@
-import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, RefreshControl } from 'react-native';
 import { Bell, Shield } from 'lucide-react-native';
 import { useNavigate } from 'react-router-native';
 import BottomNav from '../components/BottomNav';
+import { fetchMyMotors } from '../services/api';
+import { formatMotorTime } from '../utils/dateUtils';
 
 const MotorCard = ({ name, status, time, isOnline, onPress }) => (
   <TouchableOpacity style={styles.cardContainer} onPress={onPress}>
@@ -18,9 +20,26 @@ const MotorCard = ({ name, status, time, isOnline, onPress }) => (
 
 const Home = () => {
   const navigate = useNavigate();
+  const [motors, setMotors] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const handleMotorClick = (id) => {
-    navigate(`/motor/${id}`);
+  const loadMotors = async () => {
+    const data = await fetchMyMotors();
+    setMotors(data);
+  };
+
+  useEffect(() => {
+    loadMotors();
+  }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadMotors();
+    setRefreshing(false);
+  };
+
+  const handleMotorClick = (hexcode) => {
+    navigate(`/motor/${hexcode}`);
   };
 
   return (
@@ -39,33 +58,34 @@ const Home = () => {
         </View>
 
         {/* Scrollable List */}
-        <ScrollView style={styles.motorList} showsVerticalScrollIndicator={false}>
-          <MotorCard
-            name="Motor 1"
-            status="Turned ON"
-            time="for 20 min"
-            isOnline={true}
-            onPress={() => handleMotorClick(1)}
-          />
-          <MotorCard
-            name="Motor 1"
-            status="Turned OFF"
-            time="for last 3 days"
-            isOnline={false}
-            onPress={() => handleMotorClick(1)}
-          />
-           <MotorCard
-            name="Motor 1"
-            status="Turned ON"
-            time="for 20 min"
-            isOnline={true}
-            onPress={() => handleMotorClick(1)}
-          />
+        <ScrollView 
+          style={styles.motorList} 
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#050B1B" />
+          }
+        >
+          {motors.length > 0 ? (
+            motors.map((motor, index) => (
+              <MotorCard
+                key={motor.hexcode || index}
+                name={`Motor ${index + 1}`}
+                status={motor.current_on ? "Turned ON" : "Turned OFF"}
+                time={motor.starttime ? `since ${formatMotorTime(motor.starttime)}` : ""}
+                isOnline={motor.current_on}
+                onPress={() => handleMotorClick(motor.hexcode)}
+              />
+            ))
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyText}>No motors linked yet.</Text>
+            </View>
+          )}
         </ScrollView>
 
         {/* Add Motor Button */}
         <View style={styles.footerContainer}>
-          <TouchableOpacity style={styles.addButton}>
+          <TouchableOpacity style={styles.addButton} onPress={() => navigate('/link-motor')}>
              <Text style={styles.addButtonText}>Add Motor</Text>
           </TouchableOpacity>
         </View>
@@ -163,6 +183,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  emptyState: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  emptyText: {
+    color: '#9CA3AF',
+    fontSize: 14,
+  }
 });
 
 export default Home;

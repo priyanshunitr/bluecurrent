@@ -8,6 +8,7 @@ import { startScheduler } from './services/schedulerService.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'bluecurrent_secret_key_123';
 
 // ─── Middleware ────────────────────────────────────────────────────────────────
 app.use(cors());

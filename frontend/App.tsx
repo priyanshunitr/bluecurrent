@@ -14,6 +14,10 @@ import Timer from './src/features/Timer';
 import Schedule from './src/features/Schedule';
 import Home from './src/features/Home';
 import MotorDetails from './src/features/MotorDetails';
+import Login from './src/features/Auth/Login';
+import Register from './src/features/Auth/Register';
+import LinkMotor from './src/features/LinkMotor/LinkMotor';
+import Profile from './src/features/Profile/Profile';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -27,6 +31,10 @@ function App() {
           <Route path="/motor/:id" element={<MotorDetails />} />
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/timer" element={<Timer />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/link-motor" element={<LinkMotor />} />
+          <Route path="/profile" element={<Profile />} />
         </Routes>
       </NativeRouter>
     </SafeAreaProvider>

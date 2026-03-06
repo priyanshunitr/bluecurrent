@@ -7,13 +7,13 @@
  *   hexcode:          string   — unique device identifier (also the document ID)
  *   gas_level:        number   — latest gas reading from IoT; null initially
  *   current_on:       boolean  — whether the motor is running; null initially
- *   starttime:        number   — Unix ms timestamp; stores when motor was last started
+ *   starttime:        Timestamp — Firestore Timestamp; stores when motor was last started
  *                                (if current_on=false: prev start; if current_on=true: current start)
  *                                null initially
  *   user_conn:        string   — username of linked user (FK → users.username); null initially
  *                                IMMUTABLE: once set, cannot be changed
  *   schedules:        Array    — list of scheduled on/off events; see Schedule sub-schema below
- *   motorTurnOffTime: number   — Unix ms timestamp when scheduler will auto-turn-off; null if no timer
+ *   motorTurnOffTime: Timestamp — Firestore Timestamp when scheduler will auto-turn-off; null if no timer
  * }
  *
  * Schedule sub-schema (each item in `schedules`):

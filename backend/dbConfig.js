@@ -32,4 +32,5 @@ try {
   db = null;
 }
 
+export { admin };
 export default db;

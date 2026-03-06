@@ -1,15 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView } from 'react-native';
 import { Bell, Cpu, Star, CalendarDays, Calendar as CalendarIcon, ChevronRight } from 'lucide-react-native';
 import { useNavigate, useParams } from 'react-router-native';
 import Svg, { Path } from 'react-native-svg';
 import BottomNav from '../components/BottomNav';
+import { fetchMotorStatus, toggleMotorState } from '../services/api';
+import { formatMotorTime } from '../utils/dateUtils';
 
-const CustomToggle = ({ isOn, onToggle }) => (
+const CustomToggle = ({ isOn, onToggle, loading }) => (
   <TouchableOpacity
     activeOpacity={0.8}
     onPress={onToggle}
-    style={[styles.toggleTrack, { backgroundColor: isOn ? '#E5E7EB' : '#374151' }]}
+    disabled={loading}
+    style={[styles.toggleTrack, { backgroundColor: isOn ? '#E5E7EB' : '#374151', opacity: loading ? 0.6 : 1 }]}
   >
     <View style={[styles.toggleThumb, { backgroundColor: isOn ? '#16A34A' : '#9CA3AF', alignSelf: isOn ? 'flex-end' : 'flex-start' }]} />
   </TouchableOpacity>
@@ -56,8 +59,90 @@ const ScheduleItem = ({ icon: Icon, title, subtitle, tasks }) => (
 
 const MotorDetails = () => {
   const navigate = useNavigate();
-  const { id } = useParams();
-  const [motorOn, setMotorOn] = useState(true);
+  const { id: hexcode } = useParams();
+  const [motorData, setMotorData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const loadMotorData = async () => {
+    const data = await fetchMotorStatus(hexcode);
+    if (data) {
+      setMotorData(data);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadMotorData();
+    // Poll for status updates every 10 seconds
+    const interval = setInterval(loadMotorData, 10000);
+    return () => clearInterval(interval);
+  }, [hexcode]);
+
+  const handleToggle = async () => {
+      if (!motorData || actionLoading) return;
+      
+      const newState = !motorData.current_on;
+      setActionLoading(true);
+
+      // Optimistic Update
+      setMotorData(prev => ({ ...prev, current_on: newState }));
+
+      try {
+          await toggleMotorState(hexcode, newState);
+          // Refresh data to get new starttime/offtime
+          await loadMotorData();
+      } catch (error) {
+          Alert.alert('Control Error', error.message);
+          // Rollback
+          setMotorData(prev => ({ ...prev, current_on: !newState }));
+      } finally {
+          setActionLoading(false);
+      }
+  };
+
+  if (loading) {
+    return (
+        <SafeAreaView style={styles.safeArea}>
+            <View style={[styles.container, styles.center]}>
+                <Text style={styles.loadingText}>Loading motor status...</Text>
+            </View>
+        </SafeAreaView>
+    );
+  }
+
+  if (!motorData) {
+      return (
+          <SafeAreaView style={styles.safeArea}>
+              <View style={[styles.container, styles.center]}>
+                  <Text style={styles.loadingText}>Motor not found.</Text>
+                  <TouchableOpacity onPress={() => navigate(-1)}>
+                      <Text style={{color: '#38BDF8', marginTop: 10}}>Go Back</Text>
+                  </TouchableOpacity>
+              </View>
+          </SafeAreaView>
+      );
+  }
+
+  const { current_on, starttime, hexcode: displayHex, gas_level, schedules, motorTurnOffTime } = motorData;
+
+  // Helper to format schedule subtitle
+  const getScheduleSubtitle = (s) => {
+      if (s.type === 'everyday') return `${s.hour}:${s.minute.toString().padStart(2, '0')}`;
+      if (s.type === 'weekly') {
+          const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+          return `${days[s.day]} ${s.hour}:${s.minute.toString().padStart(2, '0')}`;
+      }
+      return `${s.date}/${s.month} ${s.hour}:${s.minute.toString().padStart(2, '0')}`;
+  };
+
+  // Helper to get next scheduled off time text
+  const getNextOffText = () => {
+      if (motorTurnOffTime) {
+          return `Scheduled to be OFF at ${formatMotorTime(motorTurnOffTime)}`;
+      }
+      return "No upcoming auto-off";
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -68,8 +153,8 @@ const MotorDetails = () => {
               <Cpu color="#000" size={24} />
             </TouchableOpacity>
             <View style={styles.headerTitleContainer}>
-              <Text style={styles.headerTitle}>Motor {id || '1'}</Text>
-              <Text style={styles.headerSubtitle}>HEX F1F1F1</Text>
+              <Text style={styles.headerTitle}>Motor Status</Text>
+              <Text style={styles.headerSubtitle}>HEX {displayHex || 'Unknown'}</Text>
             </View>
             <TouchableOpacity style={styles.bellButton}>
               <Bell color="#111827" size={20} />
@@ -80,17 +165,18 @@ const MotorDetails = () => {
         <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
             {/* Status Card */}
             <View style={styles.cardContainer}>
-                <Text style={styles.cardTitle}>Motor {id || '1'}</Text>
+                <Text style={styles.cardTitle}>Motor Status</Text>
                 <View style={styles.statusRow}>
-                    <View style={[styles.statusDot, { backgroundColor: motorOn ? '#16A34A' : '#6B7280' }]} />
+                    <View style={[styles.statusDot, { backgroundColor: current_on ? '#16A34A' : '#6B7280' }]} />
                     <Text style={styles.statusText}>
-                    {motorOn ? 'Turned ON since 20 min' : 'Turned OFF'}
+                    {current_on ? `Turned ON since ${formatMotorTime(starttime)}` : 'Turned OFF'}
                     </Text>
                 </View>
-                <Text style={styles.scheduledText}>Scheduled to be OFF at 6:30 AM</Text>
+                {/* Dynamic scheduled text */}
+                <Text style={styles.scheduledText}>{getNextOffText()}</Text>
                 
                 <View style={styles.toggleWrapper}>
-                    <CustomToggle isOn={motorOn} onToggle={() => setMotorOn(!motorOn)} />
+                    <CustomToggle isOn={current_on} onToggle={handleToggle} loading={actionLoading} />
                 </View>
             </View>
 
@@ -102,7 +188,7 @@ const MotorDetails = () => {
                     </View>
                     <View style={styles.gasTextWrapper}>
                         <Text style={styles.gasTitle}>GAS</Text>
-                        <Text style={styles.gasValue}>1240</Text>
+                        <Text style={styles.gasValue}>{gas_level ?? 'N/A'}</Text>
                     </View>
                 </View>
                 <Text style={styles.gasFooterText}>Gas is in the safe limit that is 1600</Text>
@@ -112,29 +198,26 @@ const MotorDetails = () => {
             <View style={styles.schedulesSection}>
                 <View style={styles.schedulesHeader}>
                     <Text style={styles.schedulesSectionTitle}>Schedules</Text>
-                    <Text style={styles.seeAllText}>See all</Text>
+                    <TouchableOpacity onPress={() => navigate('/schedule')}>
+                        <Text style={styles.seeAllText}>See all</Text>
+                    </TouchableOpacity>
                 </View>
                 
-                <ScheduleItem 
-                    icon={Star} 
-                    title="Onetime" 
-                    subtitle="24 April 6:40 AM" 
-                    tasks="1" 
-                />
-                <View style={styles.separator} />
-                <ScheduleItem 
-                    icon={CalendarIcon} 
-                    title="Day Specific" 
-                    subtitle="Tues 5:30 PM" 
-                    tasks="1" 
-                />
-                <View style={styles.separator} />
-                <ScheduleItem 
-                    icon={CalendarDays} 
-                    title="Everyday" 
-                    subtitle="4:15 AM | 6:40 PM" 
-                    tasks="2" 
-                />
+                {schedules && schedules.length > 0 ? (
+                    schedules.map((s, index) => (
+                        <React.Fragment key={s.id || index}>
+                            {index > 0 && <View style={styles.separator} />}
+                            <ScheduleItem 
+                                icon={s.type === 'everyday' ? CalendarDays : s.type === 'weekly' ? CalendarIcon : Star} 
+                                title={s.type.charAt(0).toUpperCase() + s.type.slice(1)} 
+                                subtitle={getScheduleSubtitle(s)} 
+                                tasks={s.duration ? "2" : "1"} 
+                            />
+                        </React.Fragment>
+                    ))
+                ) : (
+                    <Text style={styles.emptyText}>No schedules set for this motor.</Text>
+                )}
             </View>
             {/* Bottom Padding */}
             <View style={{height: 40}} />
@@ -343,6 +426,14 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#F3F4F6', // very light grey line
     marginVertical: 4,
+  },
+  center: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#0F172A',
+    fontSize: 16,
   }
 });
 

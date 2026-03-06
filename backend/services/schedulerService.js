@@ -1,4 +1,4 @@
-import db from '../dbConfig.js';
+import db, { admin } from '../dbConfig.js';
 
 const MOTORS_COLLECTION = 'motors';
 
@@ -60,7 +60,11 @@ const processMotor = (data, now) => {
     let updatedSchedules = [...schedules];
 
     // 1. Check if active timer has expired
-    if (data.current_on === true && data.motorTurnOffTime && now.getTime() >= data.motorTurnOffTime) {
+    const motorTurnOffTimeMillis = data.motorTurnOffTime && typeof data.motorTurnOffTime.toMillis === 'function'
+        ? data.motorTurnOffTime.toMillis()
+        : data.motorTurnOffTime;
+
+    if (data.current_on === true && motorTurnOffTimeMillis && now.getTime() >= motorTurnOffTimeMillis) {
         console.log(`[Scheduler] Timer expired for motor "${data.hexcode}". Turning OFF.`);
         newMotorState = false;
         newMotorTurnOffTime = null;
@@ -77,7 +81,7 @@ const processMotor = (data, now) => {
         changed = true;
 
         if (s.duration && s.duration > 0) {
-            newMotorTurnOffTime = now.getTime() + s.duration * 60000;
+            newMotorTurnOffTime = admin.firestore.Timestamp.fromMillis(now.getTime() + s.duration * 60000);
         } else {
             newMotorTurnOffTime = null;
         }
@@ -93,7 +97,7 @@ const processMotor = (data, now) => {
         updates.motorTurnOffTime = newMotorTurnOffTime;
 
         if (newMotorState === true) {
-            updates.starttime = now.getTime();
+            updates.starttime = admin.firestore.Timestamp.fromDate(now);
         }
     }
 

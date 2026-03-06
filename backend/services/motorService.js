@@ -1,4 +1,4 @@
-import db from '../dbConfig.js';
+import db, { admin } from '../dbConfig.js';
 
 const MOTORS_COLLECTION = 'motors';
 
@@ -155,7 +155,7 @@ export const subscribeToGasLevel = async (username, hexcode, onData, onError) =>
             // Only emit an event when gas_level actually changed
             if (newGasLevel !== lastGasLevel) {
                 lastGasLevel = newGasLevel;
-                onData({ hexcode, gas_level: newGasLevel, timestamp: Date.now() });
+                onData({ hexcode, gas_level: newGasLevel, timestamp: admin.firestore.Timestamp.now() });
             }
         },
         (err) => {
@@ -181,15 +181,15 @@ export const updateMotorState = async (hexcode, motor, duration) => {
     const snapshot = await getMotorDoc(hexcode);
     const data = snapshot.data();
 
-    const now = Date.now();
+    const nowMillis = Date.now();
     const updates = { current_on: motor };
 
     if (motor === true) {
         // Motor turning ON: record start time
-        updates.starttime = now;
+        updates.starttime = admin.firestore.Timestamp.now();
 
         if (duration && duration > 0) {
-            updates.motorTurnOffTime = now + duration * 60000; // minutes → ms
+            updates.motorTurnOffTime = admin.firestore.Timestamp.fromMillis(nowMillis + duration * 60000); // minutes → ms
         } else {
             updates.motorTurnOffTime = null; // no timer
         }
