@@ -16,11 +16,6 @@ const BottomNav = () => {
         <Text style={[styles.tabText, currentPath === '/' && styles.activeText]}>Home</Text>
       </TouchableOpacity>
       
-      <TouchableOpacity style={styles.tab} onPress={() => navigate('/schedule')}>
-        <Calendar color={currentPath === '/schedule' ? '#000' : '#8E8E93'} size={24} />
-        <Text style={[styles.tabText, currentPath === '/schedule' && styles.activeText]}>Schedule</Text>
-      </TouchableOpacity>
-      
       <TouchableOpacity style={styles.tab} onPress={() => navigate('/profile')}>
         <User color={currentPath === '/profile' ? '#000' : '#8E8E93'} size={24} />
         <Text style={[styles.tabText, currentPath === '/profile' && styles.activeText]}>Profile</Text>
