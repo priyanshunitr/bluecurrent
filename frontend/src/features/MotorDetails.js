@@ -10,8 +10,11 @@ import { fetchMotorStatus, toggleMotorState, updateSchedules } from '../services
 import { formatMotorTime } from '../utils/dateUtils';
 import { 
     View, Text, StyleSheet, SafeAreaView, TouchableOpacity, 
-    ScrollView, TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform 
+    ScrollView, TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, 
+    Platform, Modal, FlatList
 } from 'react-native';
+import { X } from 'lucide-react-native';
+
 
 const CustomToggle = ({ isOn, onToggle, loading }) => (
   <TouchableOpacity
@@ -63,14 +66,237 @@ const ScheduleItem = ({ icon: Icon, title, subtitle, tasks }) => (
     </View>
 );
 
+const WheelPicker = ({ data, selectedValue, onValueChange, label }) => {
+    const itemHeight = 40;
+    return (
+        <View style={styles.wheelWrapper}>
+            <FlatList
+                data={data}
+                keyExtractor={(item) => item.toString()}
+                snapToInterval={itemHeight}
+                showsVerticalScrollIndicator={false}
+                decelerationRate="fast"
+                contentContainerStyle={{ paddingVertical: itemHeight }}
+                onMomentumScrollEnd={(e) => {
+                    const index = Math.round(e.nativeEvent.contentOffset.y / itemHeight);
+                    if (data[index] !== undefined) onValueChange(data[index]);
+                }}
+                renderItem={({ item }) => (
+                    <View style={[styles.wheelItem, { height: itemHeight }]}>
+                        <Text style={[
+                            styles.wheelItemText, 
+                            selectedValue === item && styles.wheelItemTextActive
+                        ]}>
+                            {item.toString().padStart(2, '0')}
+                        </Text>
+                    </View>
+                )}
+            />
+            <Text style={styles.wheelLabel}>{label}</Text>
+        </View>
+    );
+};
+
+// --- Sub-components for MotorDetails ---
+
+const TimerModal = ({ visible, selH, setSelH, selM, setSelM, onStartWithTimer, onStartWithoutTimer, onClose }) => (
+    <Modal visible={visible} transparent={true} animationType="slide">
+        <View style={styles.modalOverlay}>
+            <View style={styles.bottomSheet}>
+                <View style={styles.sheetHandle} />
+                <Text style={styles.modalTitle}>Set a Timer to turn OFF automatically</Text>
+                <View style={styles.pickersContainer}>
+                    <View style={styles.pickerIndicator} pointerEvents="none" />
+                    <WheelPicker label="hours" data={[0,1,2,3,4,5,6,7,8,9,10,11,12]} selectedValue={selH} onValueChange={setSelH} />
+                    <WheelPicker label="min" data={[0,5,10,15,20,25,30,35,40,45,50,55]} selectedValue={selM} onValueChange={setSelM} />
+                </View>
+                <TouchableOpacity style={styles.startWithTimerBtn} onPress={() => onStartWithTimer(selH * 60 + selM)}>
+                    <Text style={styles.startWithTimerText}>START WITH {selH > 0 ? `${selH}h ` : ''}{selM}m TIMER</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.startWithoutTimerBtn} onPress={() => onStartWithoutTimer(0)}>
+                    <Text style={styles.startWithoutTimerText}>START WITHOUT TIMER</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.closeModalBtn} onPress={onClose}>
+                    <X color="#94A3B8" size={24} />
+                </TouchableOpacity>
+            </View>
+        </View>
+    </Modal>
+);
+
+const MotorHeader = ({ onBack, displayHex }) => (
+    <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={onBack}>
+            <Cpu color="#000" size={24} />
+        </TouchableOpacity>
+        <View style={styles.headerTitleContainer}>
+            <Text style={styles.headerTitle}>Motor Monitor</Text>
+            <Text style={styles.headerSubtitle}>HEX {displayHex || 'Unknown'}</Text>
+        </View>
+        <TouchableOpacity style={styles.bellButton}>
+            <Bell color="#111827" size={20} />
+            <View style={styles.notificationDot} />
+        </TouchableOpacity>
+    </View>
+);
+
+const MotorStatusCard = ({ isOn, starttime, nextOffText, onToggle, loading }) => (
+    <View style={styles.cardContainer}>
+        <Text style={styles.cardTitle}>Motor Status</Text>
+        <View style={styles.statusRow}>
+            <View style={[styles.statusDot, { backgroundColor: isOn ? '#16A34A' : '#6B7280' }]} />
+            <Text style={styles.statusText}>
+                {isOn ? `Turned ON since ${formatMotorTime(starttime)}` : 'Turned OFF'}
+            </Text>
+        </View>
+        <Text style={styles.scheduledText}>{nextOffText}</Text>
+        <View style={styles.toggleWrapper}>
+            <CustomToggle isOn={isOn} onToggle={onToggle} loading={loading} />
+        </View>
+    </View>
+);
+
+const GasGaugeCard = ({ gas_level }) => (
+    <View style={[styles.cardContainer, styles.gasCard]}>
+        <View style={styles.gasTopRow}>
+            <View style={styles.gasGaugeWrapper}>
+                <GasGauge />
+            </View>
+            <View style={styles.gasTextWrapper}>
+                <Text style={styles.gasTitle}>GAS</Text>
+                <Text style={styles.gasValue}>{gas_level ?? 'N/A'}</Text>
+            </View>
+        </View>
+        <Text style={styles.gasFooterText}>Gas is in the safe limit that is 1600</Text>
+    </View>
+);
+
+const ScheduleForm = ({ 
+    hour, setHour, minute, setMinute, duration, setDuration, 
+    type, setType, date, setDate, selectedDay, setSelectedDay, 
+    onAdd, saving 
+}) => (
+    <View style={styles.formCard}>
+        <View style={styles.formHeader}>
+            <Bell color="#FFFFFF" size={20} />
+            <Text style={styles.formTitle}>New Alarm</Text>
+        </View>
+
+        <View style={styles.timeRow}>
+            <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Hour</Text>
+                <TextInput 
+                    style={styles.timeInput} placeholder="08" placeholderTextColor="#94A3B8"
+                    value={hour} onChangeText={setHour} keyboardType="numeric" maxLength={2}
+                />
+            </View>
+            <Text style={styles.timeSeparator}>:</Text>
+            <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Min</Text>
+                <TextInput 
+                    style={styles.timeInput} placeholder="30" placeholderTextColor="#94A3B8"
+                    value={minute} onChangeText={setMinute} keyboardType="numeric" maxLength={2}
+                />
+            </View>
+            <View style={[styles.inputGroup, {marginLeft: 20, flex: 1.5}]}>
+                <Text style={styles.inputLabel}>Run (Min)</Text>
+                <TextInput 
+                    style={styles.durationInput} placeholder="Optional" placeholderTextColor="#94A3B8"
+                    value={duration} onChangeText={setDuration} keyboardType="numeric"
+                />
+            </View>
+        </View>
+
+        <View style={styles.typeSelector}>
+            {['everyday', 'weekly', 'particular'].map(t => (
+                <TouchableOpacity 
+                    key={t}
+                    style={[styles.typeBtn, type === t && styles.typeBtnActive]}
+                    onPress={() => setType(t)}
+                >
+                    <Text style={[styles.typeBtnText, type === t && styles.typeBtnTextActive]}>
+                        {t.slice(0, 3).toUpperCase()}
+                    </Text>
+                </TouchableOpacity>
+            ))}
+        </View>
+
+        {type === 'particular' && (
+            <View style={styles.dateRow}>
+                <TextInput style={styles.dateInput} placeholder="DD" value={date.d} onChangeText={v => setDate({...date, d: v})} keyboardType="numeric" />
+                <TextInput style={styles.dateInput} placeholder="MM" value={date.m} onChangeText={v => setDate({...date, m: v})} keyboardType="numeric" />
+                <TextInput style={styles.dateInput} placeholder="YY" value={date.y} onChangeText={v => setDate({...date, y: v})} keyboardType="numeric" />
+            </View>
+        )}
+        
+        {type === 'weekly' && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.daySelector}>
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d, i) => (
+                    <TouchableOpacity 
+                        key={d} 
+                        style={[styles.dayBtn, selectedDay === i && styles.dayBtnActive]}
+                        onPress={() => setSelectedDay(i)}
+                    >
+                        <Text style={[styles.dayBtnText, selectedDay === i && styles.dayBtnTextActive]}>{d}</Text>
+                    </TouchableOpacity>
+                ))}
+            </ScrollView>
+        )}
+
+        <TouchableOpacity style={styles.addButton} onPress={onAdd} disabled={saving}>
+            {saving ? <ActivityIndicator color="#050B1B" /> : (
+                <>
+                    <Plus color="#050B1B" size={20} />
+                    <Text style={styles.addButtonText}>Set Schedule</Text>
+                </>
+            )}
+        </TouchableOpacity>
+    </View>
+);
+
+const ActiveSchedulesList = ({ schedules, onDelete }) => (
+    <>
+        <Text style={styles.subSectionTitle}>Active Schedules</Text>
+        {schedules && schedules.length > 0 ? (
+            schedules.map((s, index) => (
+                <View key={s.id || index} style={styles.scheduleRow}>
+                    <View style={styles.scheduleIconBox}>
+                        {s.type === 'everyday' ? <Calendar color="#FFFFFF" size={18} /> : 
+                         s.type === 'weekly' ? <Clock color="#FFFFFF" size={18} /> : 
+                         <Star color="#FFFFFF" size={18} />}
+                    </View>
+                    <View style={styles.scheduleInfo}>
+                        <Text style={styles.scheduleTimeText}>
+                            {s.hour.toString().padStart(2, '0')}:{s.minute.toString().padStart(2, '0')}
+                        </Text>
+                        <Text style={styles.scheduleTypeText}>
+                            {s.type} {s.duration ? `• ${s.duration} min run` : ''}
+                        </Text>
+                    </View>
+                    <TouchableOpacity onPress={() => onDelete(s.id)} style={styles.deleteBtn}>
+                        <Trash2 color="#EF4444" size={20} />
+                    </TouchableOpacity>
+                </View>
+            ))
+        ) : (
+            <Text style={styles.emptyText}>No schedules set yet</Text>
+        )}
+    </>
+);
+
+
 const MotorDetails = () => {
   const navigate = useNavigate();
   const { id: hexcode } = useParams();
-  const [activeTab, setActiveTab] = useState('Status'); // Status or Schedule
   const [motorData, setMotorData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Timer Modal State
+  const [showTimerModal, setShowTimerModal] = useState(false);
+  const [selH, setSelH] = useState(0);
+  const [selM, setSelM] = useState(15);
 
   // Schedule Form State
   const [hour, setHour] = useState('');
@@ -95,27 +321,36 @@ const MotorDetails = () => {
     return () => clearInterval(interval);
   }, [hexcode]);
 
-  const handleToggle = async () => {
+  const handleToggle = async (forcedDuration = -1) => {
       if (!motorData || actionLoading) return;
       
       const newState = !motorData.current_on;
-      setActionLoading(true);
+      
+      const normalizedDuration = typeof forcedDuration === 'number' ? forcedDuration : -1;
 
-      // Optimistic Update
+      if (newState === true && normalizedDuration === -1) {
+          setShowTimerModal(true);
+          return;
+      }
+
+      setActionLoading(true);
+      setShowTimerModal(false);
+
+      const finalDuration = normalizedDuration === -1 ? 0 : normalizedDuration;
+
       setMotorData(prev => ({ ...prev, current_on: newState }));
 
       try {
-          await toggleMotorState(hexcode, newState);
-          // Refresh data to get new starttime/offtime
+          await toggleMotorState(hexcode, newState, finalDuration);
           await loadMotorData();
       } catch (error) {
           Alert.alert('Control Error', error.message);
-          // Rollback
           setMotorData(prev => ({ ...prev, current_on: !newState }));
       } finally {
           setActionLoading(false);
       }
   };
+
 
   const addSchedule = async () => {
     const h = parseInt(hour);
@@ -199,205 +434,50 @@ const MotorDetails = () => {
       return `${s.date}/${s.month} ${s.hour}:${s.minute.toString().padStart(2, '0')}`;
   };
 
-  // Helper to get next scheduled off time text
   const getNextOffText = () => {
-      if (motorTurnOffTime) {
-          return `Scheduled to be OFF at ${formatMotorTime(motorTurnOffTime)}`;
-      }
-      return "No upcoming auto-off";
+    if (motorTurnOffTime) {
+        return `Scheduled to be OFF at ${formatMotorTime(motorTurnOffTime)}`;
+    }
+    return "No upcoming auto-off";
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-            <TouchableOpacity style={styles.backButton} onPress={() => navigate(-1)}>
-              <Cpu color="#000" size={24} />
-            </TouchableOpacity>
-            <View style={styles.headerTitleContainer}>
-              <Text style={styles.headerTitle}>Motor Status</Text>
-              <Text style={styles.headerSubtitle}>HEX {displayHex || 'Unknown'}</Text>
-            </View>
-            <TouchableOpacity style={styles.bellButton}>
-              <Bell color="#111827" size={20} />
-              <View style={styles.notificationDot} />
-            </TouchableOpacity>
-        </View>
+
+        <TimerModal 
+            visible={showTimerModal} 
+            selH={selH} setSelH={setSelH} 
+            selM={selM} setSelM={setSelM} 
+            onStartWithTimer={handleToggle} 
+            onStartWithoutTimer={handleToggle} 
+            onClose={() => setShowTimerModal(false)} 
+        />
+        
+        <MotorHeader onBack={() => navigate(-1)} displayHex={displayHex} />
 
         <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            {/* Status Card */}
-            <View style={styles.cardContainer}>
-                <Text style={styles.cardTitle}>Motor Status</Text>
-                <View style={styles.statusRow}>
-                    <View style={[styles.statusDot, { backgroundColor: current_on ? '#16A34A' : '#6B7280' }]} />
-                    <Text style={styles.statusText}>
-                    {current_on ? `Turned ON since ${formatMotorTime(starttime)}` : 'Turned OFF'}
-                    </Text>
-                </View>
-                {/* Dynamic scheduled text */}
-                <Text style={styles.scheduledText}>{getNextOffText()}</Text>
-                
-                <View style={styles.toggleWrapper}>
-                    <CustomToggle isOn={current_on} onToggle={handleToggle} loading={actionLoading} />
-                </View>
+            
+            <MotorStatusCard 
+                isOn={current_on} 
+                starttime={starttime} 
+                nextOffText={getNextOffText()} 
+                onToggle={() => handleToggle()} 
+                loading={actionLoading} 
+            />
+
+            <GasGaugeCard gas_level={gas_level} />
+
+            <View style={styles.fullScheduleSection}>
+                <ScheduleForm 
+                    hour={hour} setHour={setHour} minute={minute} setMinute={setMinute} 
+                    duration={duration} setDuration={setDuration} type={type} setType={setType} 
+                    date={date} setDate={setDate} selectedDay={selectedDay} setSelectedDay={setSelectedDay} 
+                    onAdd={addSchedule} saving={saving} 
+                />
+
+                <ActiveSchedulesList schedules={schedules} onDelete={deleteSchedule} />
             </View>
-
-            {/* Tab Switched Content */}
-            <View style={styles.tabContainer}>
-                {['Status', 'Schedule'].map(tab => (
-                    <TouchableOpacity 
-                        key={tab} 
-                        style={[styles.tabButton, activeTab === tab && styles.tabButtonActive]}
-                        onPress={() => setActiveTab(tab)}
-                    >
-                        <Text style={[styles.tabButtonText, activeTab === tab && styles.tabButtonTextActive]}>{tab}</Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
-
-            {activeTab === 'Status' ? (
-                /* Gas Content Card */
-                <View style={[styles.cardContainer, styles.gasCard]}>
-                    <View style={styles.gasTopRow}>
-                        <View style={styles.gasGaugeWrapper}>
-                            <GasGauge />
-                        </View>
-                        <View style={styles.gasTextWrapper}>
-                            <Text style={styles.gasTitle}>GAS</Text>
-                            <Text style={styles.gasValue}>{gas_level ?? 'N/A'}</Text>
-                        </View>
-                    </View>
-                    <Text style={styles.gasFooterText}>Gas is in the safe limit that is 1600</Text>
-                </View>
-            ) : (
-                /* Schedule Section */
-                <View style={styles.fullScheduleSection}>
-                    {/* New Alarm Form */}
-                    <View style={styles.formCard}>
-                        <View style={styles.formHeader}>
-                            <Bell color="#FFFFFF" size={20} />
-                            <Text style={styles.formTitle}>New Alarm</Text>
-                        </View>
-
-                        <View style={styles.timeRow}>
-                            <View style={styles.inputGroup}>
-                                <Text style={styles.inputLabel}>Hour</Text>
-                                <TextInput 
-                                    style={styles.timeInput}
-                                    placeholder="08"
-                                    placeholderTextColor="#94A3B8"
-                                    value={hour}
-                                    onChangeText={setHour}
-                                    keyboardType="numeric"
-                                    maxLength={2}
-                                />
-                            </View>
-                            <Text style={styles.timeSeparator}>:</Text>
-                            <View style={styles.inputGroup}>
-                                <Text style={styles.inputLabel}>Min</Text>
-                                <TextInput 
-                                    style={styles.timeInput}
-                                    placeholder="30"
-                                    placeholderTextColor="#94A3B8"
-                                    value={minute}
-                                    onChangeText={setMinute}
-                                    keyboardType="numeric"
-                                    maxLength={2}
-                                />
-                            </View>
-                            <View style={[styles.inputGroup, {marginLeft: 20, flex: 1.5}]}>
-                                <Text style={styles.inputLabel}>Run (Min)</Text>
-                                <TextInput 
-                                    style={styles.durationInput}
-                                    placeholder="Optional"
-                                    placeholderTextColor="#94A3B8"
-                                    value={duration}
-                                    onChangeText={setDuration}
-                                    keyboardType="numeric"
-                                />
-                            </View>
-                        </View>
-
-                        <View style={styles.typeSelector}>
-                            {['everyday', 'weekly', 'particular'].map(t => (
-                                <TouchableOpacity 
-                                    key={t}
-                                    style={[styles.typeBtn, type === t && styles.typeBtnActive]}
-                                    onPress={() => setType(t)}
-                                >
-                                    <Text style={[styles.typeBtnText, type === t && styles.typeBtnTextActive]}>
-                                        {t.slice(0, 3).toUpperCase()}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-
-                        {type === 'particular' && (
-                            <View style={styles.dateRow}>
-                                <TextInput style={styles.dateInput} placeholder="DD" value={date.d} onChangeText={v => setDate({...date, d: v})} keyboardType="numeric" />
-                                <TextInput style={styles.dateInput} placeholder="MM" value={date.m} onChangeText={v => setDate({...date, m: v})} keyboardType="numeric" />
-                                <TextInput style={styles.dateInput} placeholder="YY" value={date.y} onChangeText={v => setDate({...date, y: v})} keyboardType="numeric" />
-                            </View>
-                        )}
-                        
-                        {type === 'weekly' && (
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.daySelector}>
-                                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d, i) => (
-                                    <TouchableOpacity 
-                                        key={d} 
-                                        style={[styles.dayBtn, selectedDay === i && styles.dayBtnActive]}
-                                        onPress={() => setSelectedDay(i)}
-                                    >
-                                        <Text style={[styles.dayBtnText, selectedDay === i && styles.dayBtnTextActive]}>{d}</Text>
-                                    </TouchableOpacity>
-                                ))}
-                            </ScrollView>
-                        )}
-
-                        <TouchableOpacity 
-                            style={styles.addButton} 
-                            onPress={addSchedule}
-                            disabled={saving}
-                        >
-                            {saving ? <ActivityIndicator color="#050B1B" /> : (
-                                <>
-                                    <Plus color="#050B1B" size={20} />
-                                    <Text style={styles.addButtonText}>Set Schedule</Text>
-                                </>
-                            )}
-                        </TouchableOpacity>
-                    </View>
-
-                    {/* Active List */}
-                    <Text style={styles.subSectionTitle}>Active Schedules</Text>
-                    {schedules && schedules.length > 0 ? (
-                        schedules.map((s, index) => (
-                            <View key={s.id || index} style={styles.scheduleRow}>
-                                <View style={styles.scheduleIconBox}>
-                                    {s.type === 'everyday' ? <Calendar color="#FFFFFF" size={18} /> : 
-                                     s.type === 'weekly' ? <Clock color="#FFFFFF" size={18} /> : 
-                                     <Star color="#FFFFFF" size={18} />}
-                                </View>
-                                <View style={styles.scheduleInfo}>
-                                    <Text style={styles.scheduleTimeText}>
-                                        {s.hour.toString().padStart(2, '0')}:{s.minute.toString().padStart(2, '0')}
-                                    </Text>
-                                    <Text style={styles.scheduleTypeText}>
-                                        {s.type} {s.duration ? `• ${s.duration} min run` : ''}
-                                    </Text>
-                                </View>
-                                <TouchableOpacity onPress={() => deleteSchedule(s.id)} style={styles.deleteBtn}>
-                                    <Trash2 color="#EF4444" size={20} />
-                                </TouchableOpacity>
-                            </View>
-                        ))
-                    ) : (
-                        <Text style={styles.emptyText}>No schedules set yet</Text>
-                    )}
-                </View>
-            )}
-            {/* Bottom Padding */}
             <View style={{height: 40}} />
         </ScrollView>
       </View>
@@ -481,6 +561,116 @@ const styles = StyleSheet.create({
   scheduleSubtitle: { fontSize: 12, color: '#6B7280' },
   scheduleTasks: { fontSize: 12, color: '#6B7280' },
   separator: { height: 1, backgroundColor: '#F3F4F6', marginVertical: 4 },
+
+  // Modal & Picker Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+  },
+  bottomSheet: {
+    backgroundColor: '#000000',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    padding: 24,
+    alignItems: 'center',
+    paddingBottom: 40,
+  },
+  sheetHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: '#334155',
+    borderRadius: 2,
+    marginBottom: 20,
+  },
+  modalTitle: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 30,
+  },
+  pickersContainer: {
+    flexDirection: 'row',
+    height: 120, // Reduced height for tighter look
+    width: '100%',
+    justifyContent: 'space-around',
+    marginBottom: 40,
+    position: 'relative',
+    alignItems: 'center',
+  },
+  pickerIndicator: {
+    position: 'absolute',
+    top: 40, // (120 - 40) / 2
+    left: 0,
+    right: 0,
+    height: 40,
+    backgroundColor: '#1E293B',
+    borderRadius: 12,
+    opacity: 0.5,
+  },
+  wheelWrapper: {
+    flex: 1,
+    height: '100%',
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+  wheelItem: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  wheelItemText: {
+    color: '#334155',
+    fontSize: 20,
+    fontWeight: '500',
+  },
+  wheelItemTextActive: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  wheelLabel: {
+    color: '#94A3B8',
+    fontSize: 14,
+    marginLeft: 6,
+    fontWeight: '600',
+    paddingBottom: 2,
+  },
+  startWithTimerBtn: {
+    backgroundColor: '#1E293B',
+    width: '100%',
+    height: 56,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  startWithTimerText: {
+    color: '#38BDF8',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  startWithoutTimerBtn: {
+    width: '100%',
+    height: 56,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#16A34A',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  startWithoutTimerText: {
+    color: '#16A34A',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  closeModalBtn: {
+      position: 'absolute',
+      top: 24,
+      right: 24,
+  }
 });
 
 export default MotorDetails;
