@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { NativeRouter, Route, Routes } from 'react-router-native';
+import React, { useState, useEffect } from 'react';
+import { NativeRouter, Route, Routes, useNavigate } from 'react-router-native';
 import {
   StatusBar,
   StyleSheet,
@@ -18,6 +18,19 @@ import Login from './src/features/Auth/Login';
 import Register from './src/features/Auth/Register';
 import LinkMotor from './src/features/LinkMotor/LinkMotor';
 import Profile from './src/features/Profile/Profile';
+import { setUnauthorizedHandler } from './src/services/api';
+
+const AuthListener = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      navigate('/login');
+    });
+  }, [navigate]);
+
+  return null;
+};
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -26,6 +39,7 @@ function App() {
     <SafeAreaProvider>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <NativeRouter>
+        <AuthListener />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/motor/:id" element={<MotorDetails />} />

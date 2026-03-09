@@ -2,6 +2,41 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_URL = process.env.API_URL || 'http://10.0.2.2:3000'; // Fallback to local emulator
 
+let onUnauthorized = () => {};
+
+/**
+ * Registry for unauthorized callback (implemented in App.tsx or similar)
+ */
+export const setUnauthorizedHandler = (handler) => {
+    onUnauthorized = handler;
+};
+
+/**
+ * ── HELPER ──
+ */
+const authenticatedFetch = async (endpoint, options = {}) => {
+    const token = await AsyncStorage.getItem('userToken');
+    
+    const headers = {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        ...options.headers,
+    };
+
+    const response = await fetch(`${API_URL}${endpoint}`, {
+        ...options,
+        headers,
+    });
+
+    if (response.status === 401) {
+        await logoutUser();
+        onUnauthorized();
+        throw new Error('Session expired. Please log in again.');
+    }
+
+    return response;
+};
+
 /**
  * ── AUTH SERVICES ──
  */
@@ -50,13 +85,8 @@ export const logoutUser = async () => {
 
 export const changePassword = async (oldPassword, newPassword) => {
     try {
-        const token = await getAuthToken();
-        const response = await fetch(`${API_URL}/auth/change-password`, {
+        const response = await authenticatedFetch('/auth/change-password', {
             method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
             body: JSON.stringify({ oldPassword, newPassword }),
         });
         const data = await response.json();
@@ -78,21 +108,8 @@ export const getAuthToken = async () => {
 
 export const fetchMyMotors = async () => {
   try {
-    const token = await getAuthToken();
-    const response = await fetch(`${API_URL}/motors/my`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-        if (response.status === 401) {
-            console.warn('API Error: Unauthorized Access (Check Token)');
-        }
-        throw new Error('Failed to fetch motors');
-    }
+    const response = await authenticatedFetch('/motors/my');
+    if (!response.ok) throw new Error('Failed to fetch motors');
 
     const data = await response.json();
     return data.motors || [];
@@ -104,15 +121,7 @@ export const fetchMyMotors = async () => {
 
 export const fetchMotorStatus = async (hexcode) => {
   try {
-    const token = await getAuthToken();
-    const response = await fetch(`${API_URL}/motors/${hexcode}/status`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
+    const response = await authenticatedFetch(`/motors/${hexcode}/status`);
     if (!response.ok) throw new Error('Failed to fetch motor status');
 
     return await response.json();
@@ -124,13 +133,8 @@ export const fetchMotorStatus = async (hexcode) => {
 
 export const linkMotor = async (hexcode) => {
     try {
-        const token = await getAuthToken();
-        const response = await fetch(`${API_URL}/motors/link`, {
+        const response = await authenticatedFetch('/motors/link', {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
             body: JSON.stringify({ hexcode }),
         });
         const data = await response.json();
@@ -163,14 +167,7 @@ export const toggleMotorState = async (hexcode, motor, duration = 0) => {
 
 export const fetchSchedules = async (hexcode) => {
     try {
-        const token = await getAuthToken();
-        const response = await fetch(`${API_URL}/motors/${hexcode}/schedules`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-        });
+        const response = await authenticatedFetch(`/motors/${hexcode}/schedules`);
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Failed to fetch schedules');
         return data.schedules || [];
@@ -182,13 +179,8 @@ export const fetchSchedules = async (hexcode) => {
 
 export const updateSchedules = async (hexcode, schedules) => {
     try {
-        const token = await getAuthToken();
-        const response = await fetch(`${API_URL}/motors/${hexcode}/schedules`, {
+        const response = await authenticatedFetch(`/motors/${hexcode}/schedules`, {
             method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
             body: JSON.stringify({ schedules }),
         });
         const data = await response.json();

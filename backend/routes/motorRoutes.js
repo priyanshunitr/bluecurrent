@@ -16,6 +16,7 @@ import {
     updateMotorState,
     getSchedules,
     updateSchedules,
+    getDeviceStatus,
 } from '../services/motorService.js';
 
 const router = Router();
@@ -110,6 +111,21 @@ router.put('/:hexcode/motor', async (req, res) => {
         const { motor, duration } = req.body;
         const result = await updateMotorState(req.params.hexcode, motor, duration);
         return res.status(200).json({ message: 'Motor state updated successfully.', ...result });
+    } catch (err) {
+        return res.status(err.statusCode || 500).json({ error: err.message });
+    }
+});
+
+// ─── GET /motors/:hexcode/device-status ─────────────────────────────────────────
+/**
+ * IoT Device endpoint — fetch current ON/OFF state and optional timer.
+ * NO authentication required (device reads directly via hexcode).
+ * Returns: { hexcode, current_on, motorTurnOffTime (millis or null) }
+ */
+router.get('/:hexcode/device-status', async (req, res) => {
+    try {
+        const result = await getDeviceStatus(req.params.hexcode);
+        return res.status(200).json(result);
     } catch (err) {
         return res.status(err.statusCode || 500).json({ error: err.message });
     }

@@ -249,3 +249,20 @@ export const updateSchedules = async (username, hexcode, schedules) => {
 
     await db.collection(MOTORS_COLLECTION).doc(hexcode).update({ schedules });
 };
+
+/**
+ * Returns the current operational state for the IoT device itself.
+ * No authentication/ownership check (device uses its own hexcode).
+ * 
+ * @param {string} hexcode
+ * @returns {Promise<Object>} { hexcode, current_on, motorTurnOffTime }
+ */
+export const getDeviceStatus = async (hexcode) => {
+    const snapshot = await getMotorDoc(hexcode);
+    const { current_on, motorTurnOffTime } = snapshot.data();
+    return {
+        hexcode,
+        current_on: current_on ?? false,
+        motorTurnOffTime: motorTurnOffTime ? motorTurnOffTime.toMillis() : null
+    };
+};
