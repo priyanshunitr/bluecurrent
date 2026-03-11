@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
-    View, Text, StyleSheet, SafeAreaView, TouchableOpacity, 
+    View, Text, StyleSheet, TouchableOpacity, 
     TextInput, Alert, ActivityIndicator, Animated
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { 
     Clock, Play, Square, RotateCcw, 
     ChevronLeft, Cpu, Shield

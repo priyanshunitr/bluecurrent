@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { 
-    View, Text, StyleSheet, SafeAreaView, TextInput, 
+    View, Text, StyleSheet, TextInput, 
     TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Alert 
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Shield, Lock, User, ArrowRight } from 'lucide-react-native';
 import { useNavigate } from 'react-router-native';
 import { loginUser } from '../../services/api';

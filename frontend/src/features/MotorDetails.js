@@ -9,10 +9,11 @@ import BottomNav from '../components/BottomNav';
 import { fetchMotorStatus, toggleMotorState, updateSchedules } from '../services/api';
 import { formatMotorTime } from '../utils/dateUtils';
 import { 
-    View, Text, StyleSheet, SafeAreaView, TouchableOpacity, 
+    View, Text, StyleSheet, TouchableOpacity, 
     ScrollView, TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, 
     Platform, Modal, FlatList
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { X } from 'lucide-react-native';
 
 

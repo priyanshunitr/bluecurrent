@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { 
-    View, Text, StyleSheet, SafeAreaView, TextInput, 
+    View, Text, StyleSheet, TextInput, 
     TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Cpu, ChevronLeft, Link as LinkIcon, Edit3 } from 'lucide-react-native';
 import { useNavigate } from 'react-router-native';
 import { linkMotor, fetchMyMotors } from '../../services/api';

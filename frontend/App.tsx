@@ -38,7 +38,7 @@ function App() {
   return (
     <SafeAreaProvider>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <NativeRouter>
+      <NativeRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <AuthListener />
         <Routes>
           <Route path="/" element={<Home />} />
