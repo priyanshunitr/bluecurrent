@@ -108,7 +108,7 @@ const Schedule = () => {
         return (
             <SafeAreaView style={styles.safeArea}>
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#050B1B" />
+                    <ActivityIndicator size="large" color="#0A203F" />
                     <Text style={styles.loadingText}>Loading Schedules...</Text>
                 </View>
             </SafeAreaView>
@@ -237,9 +237,9 @@ const Schedule = () => {
                             onPress={addSchedule}
                             disabled={saving}
                         >
-                            {saving ? <ActivityIndicator color="#050B1B" /> : (
+                            {saving ? <ActivityIndicator color="#0A203F" /> : (
                                 <>
-                                    <Plus color="#050B1B" size={20} />
+                                    <Plus color="#0A203F" size={20} />
                                     <Text style={styles.addButtonText}>Set Schedule</Text>
                                 </>
                             )}
@@ -311,11 +311,11 @@ const styles = StyleSheet.create({
         borderRadius: 30,
         marginRight: 10,
     },
-    motorTabActive: { backgroundColor: '#050B1B' },
+    motorTabActive: { backgroundColor: '#0A203F' },
     motorTabText: { marginLeft: 8, fontSize: 14, color: '#64748B', fontWeight: '500' },
     motorTabTextActive: { color: '#FFFFFF' },
     formCard: {
-        backgroundColor: '#050B1B',
+        backgroundColor: '#0A203F',
         borderRadius: 24,
         padding: 24,
         marginBottom: 32,
@@ -353,14 +353,14 @@ const styles = StyleSheet.create({
     typeBtn: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 10 },
     typeBtnActive: { backgroundColor: '#FFFFFF' },
     typeBtnText: { color: '#94A3B8', fontSize: 13, fontWeight: '600' },
-    typeBtnTextActive: { color: '#050B1B' },
+    typeBtnTextActive: { color: '#0A203F' },
     dateRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
     dateInput: { backgroundColor: '#1E293B', borderRadius: 8, width: '30%', height: 45, color: '#FFFFFF', textAlign: 'center' },
     daySelector: { flexDirection: 'row', marginBottom: 20 },
     dayBtn: { width: 45, height: 45, borderRadius: 22, backgroundColor: '#1E293B', alignItems: 'center', justifyContent: 'center', marginRight: 10 },
     dayBtnActive: { backgroundColor: '#FFFFFF' },
     dayBtnText: { color: '#94A3B8', fontSize: 12, fontWeight: '700' },
-    dayBtnTextActive: { color: '#050B1B' },
+    dayBtnTextActive: { color: '#0A203F' },
     addButton: {
         backgroundColor: '#10B981', // Emerald green 
         height: 56,
@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    addButtonText: { color: '#050B1B', fontSize: 16, fontWeight: '700', marginLeft: 8 },
+    addButtonText: { color: '#0A203F', fontSize: 16, fontWeight: '700', marginLeft: 8 },
     listSection: {},
     emptyList: { alignItems: 'center', paddingVertical: 40 },
     emptyText: { color: '#94A3B8', marginTop: 12, fontSize: 14 },
@@ -387,7 +387,7 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 12,
-        backgroundColor: '#050B1B',
+        backgroundColor: '#0A203F',
         alignItems: 'center',
         justifyContent: 'center',
     },

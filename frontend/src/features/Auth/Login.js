@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
         width: 80,
         height: 80,
         borderRadius: 20,
-        backgroundColor: '#050B1B',
+        backgroundColor: '#0A203F',
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: 24,
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
     loginButton: {
-        backgroundColor: '#050B1B',
+        backgroundColor: '#0A203F',
         borderRadius: 12,
         height: 56,
         flexDirection: 'row',
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
     },
     registerHighlight: {
-        color: '#050B1B',
+        color: '#0A203F',
         fontWeight: '600',
     },
 });

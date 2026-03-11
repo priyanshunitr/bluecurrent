@@ -12,12 +12,12 @@ const BottomNav = () => {
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.tab} onPress={() => navigate('/')}>
-        <Home color={currentPath === '/' ? '#000' : '#8E8E93'} size={24} />
+        <Home color={currentPath === '/' ? '#0A203F' : '#8E8E93'} size={24} />
         <Text style={[styles.tabText, currentPath === '/' && styles.activeText]}>Home</Text>
       </TouchableOpacity>
       
       <TouchableOpacity style={styles.tab} onPress={() => navigate('/profile')}>
-        <User color={currentPath === '/profile' ? '#000' : '#8E8E93'} size={24} />
+        <User color={currentPath === '/profile' ? '#0A203F' : '#8E8E93'} size={24} />
         <Text style={[styles.tabText, currentPath === '/profile' && styles.activeText]}>Profile</Text>
       </TouchableOpacity>
     </View>
@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
   },
   activeText: {
-    color: '#000000',
+    color: '#0A203F',
     fontWeight: '600',
   },
 });

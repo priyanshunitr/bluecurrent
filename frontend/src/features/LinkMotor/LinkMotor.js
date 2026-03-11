@@ -1,16 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
     View, Text, StyleSheet, SafeAreaView, TextInput, 
-    TouchableOpacity, Alert, KeyboardAvoidingView, Platform 
+    TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView
 } from 'react-native';
-import { Cpu, ChevronLeft, Link as LinkIcon } from 'lucide-react-native';
+import { Cpu, ChevronLeft, Link as LinkIcon, Edit3 } from 'lucide-react-native';
 import { useNavigate } from 'react-router-native';
-import { linkMotor } from '../../services/api';
+import { linkMotor, fetchMyMotors } from '../../services/api';
 
 const LinkMotor = () => {
     const navigate = useNavigate();
     const [hexcode, setHexcode] = useState('');
+    const [nickname, setNickname] = useState('');
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        const initDefaultName = async () => {
+            try {
+                const motors = await fetchMyMotors();
+                setNickname(`Motor ${motors.length + 1}`);
+            } catch (e) {
+                setNickname('Motor 1');
+            }
+        };
+        initDefaultName();
+    }, []);
 
     const handleLink = async () => {
         if (!hexcode) {
@@ -20,7 +33,7 @@ const LinkMotor = () => {
 
         setLoading(true);
         try {
-            await linkMotor(hexcode);
+            await linkMotor(hexcode, nickname || undefined);
             Alert.alert('Success', 'Motor linked successfully!', [
                 { text: 'OK', onPress: () => navigate('/') }
             ]);
@@ -40,19 +53,24 @@ const LinkMotor = () => {
                 <Text style={styles.headerTitle}>Add New Motor</Text>
             </View>
 
+            <ScrollView contentContainerStyle={{flexGrow: 1}}>
             <KeyboardAvoidingView 
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.content}
             >
                 <View style={styles.card}>
                     <View style={styles.iconCircle}>
-                        <Cpu color="#FFFFFF" size={40} />
+                        <Cpu color="#FFFFFF" size={32} />
                     </View>
                     <Text style={styles.cardTitle}>Link Your Device</Text>
                     <Text style={styles.cardSubtitle}>
-                        Enter the unique hexcode printed on your motor control box.
+                        Enter the unique hexcode and give your motor a name.
                     </Text>
 
+                    <View style={styles.inputLabelContainer}>
+                        <LinkIcon color="#64748B" size={14} />
+                        <Text style={styles.inputLabel}>DEVICE HEXCODE</Text>
+                    </View>
                     <View style={styles.inputWrapper}>
                         <TextInput
                             style={styles.input}
@@ -61,6 +79,20 @@ const LinkMotor = () => {
                             value={hexcode}
                             onChangeText={setHexcode}
                             autoCapitalize="characters"
+                        />
+                    </View>
+
+                    <View style={styles.inputLabelContainer}>
+                        <Edit3 color="#64748B" size={14} />
+                        <Text style={styles.inputLabel}>MOTOR NAME</Text>
+                    </View>
+                    <View style={styles.inputWrapper}>
+                        <TextInput
+                            style={[styles.input, { letterSpacing: 0.5, fontSize: 16 }]}
+                            placeholder="e.g., Garden Motor"
+                            placeholderTextColor="#94A3B8"
+                            value={nickname}
+                            onChangeText={setNickname}
                         />
                     </View>
 
@@ -76,6 +108,7 @@ const LinkMotor = () => {
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>
+            </ScrollView>
         </SafeAreaView>
     );
 };
@@ -121,7 +154,7 @@ const styles = StyleSheet.create({
         width: 80,
         height: 80,
         borderRadius: 40,
-        backgroundColor: '#050B1B',
+        backgroundColor: '#0A203F',
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: 24,
@@ -133,18 +166,32 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     cardSubtitle: {
-        fontSize: 15,
+        fontSize: 14,
         color: '#64748B',
         textAlign: 'center',
-        lineHeight: 22,
-        marginBottom: 32,
+        lineHeight: 20,
+        marginBottom: 24,
+    },
+    inputLabelContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        alignSelf: 'flex-start',
+        marginBottom: 8,
+        marginLeft: 4,
+    },
+    inputLabel: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: '#64748B',
+        marginLeft: 6,
+        letterSpacing: 0.5,
     },
     inputWrapper: {
         width: '100%',
-        backgroundColor: '#F1F5F9',
+        backgroundColor: '#F8FAFC',
         borderRadius: 12,
         paddingHorizontal: 16,
-        marginBottom: 24,
+        marginBottom: 20,
         borderWidth: 1,
         borderColor: '#E2E8F0',
     },
@@ -159,7 +206,7 @@ const styles = StyleSheet.create({
     linkButton: {
         width: '100%',
         height: 56,
-        backgroundColor: '#050B1B',
+        backgroundColor: '#0A203F',
         borderRadius: 12,
         flexDirection: 'row',
         alignItems: 'center',

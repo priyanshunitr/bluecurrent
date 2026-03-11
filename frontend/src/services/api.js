@@ -131,11 +131,11 @@ export const fetchMotorStatus = async (hexcode) => {
   }
 };
 
-export const linkMotor = async (hexcode) => {
+export const linkMotor = async (hexcode, nickname) => {
     try {
         const response = await authenticatedFetch('/motors/link', {
             method: 'POST',
-            body: JSON.stringify({ hexcode }),
+            body: JSON.stringify({ hexcode, nickname }),
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Linking failed');

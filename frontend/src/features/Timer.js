@@ -131,7 +131,7 @@ const Timer = () => {
         return (
             <SafeAreaView style={styles.safeArea}>
                 <View style={styles.centerContainer}>
-                    <ActivityIndicator size="large" color="#050B1B" />
+                    <ActivityIndicator size="large" color="#0A203F" />
                 </View>
             </SafeAreaView>
         );
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
     timerText: {
         fontSize: 42,
         fontWeight: '800',
-        color: '#050B1B',
+        color: '#0A203F',
         letterSpacing: 1,
     },
     timerSubtext: {

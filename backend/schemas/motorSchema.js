@@ -51,9 +51,12 @@ export const buildInitialMotorDocument = (hexcode) => ({
  * @param {{ hexcode: any }} body
  * @returns {string|null}
  */
-export const validateLinkInput = ({ hexcode }) => {
+export const validateLinkInput = ({ hexcode, nickname }) => {
     if (!hexcode || typeof hexcode !== 'string' || hexcode.trim() === '') {
         return 'hexcode is required and must be a non-empty string.';
+    }
+    if (nickname !== undefined && typeof nickname !== 'string') {
+        return 'nickname must be a string.';
     }
     return null;
 };

@@ -134,10 +134,13 @@ const MotorDetails = () => {
     };
   
     const getNextOffText = () => {
-      if (motorData?.motorTurnOffTime) {
-          return `Scheduled to be OFF at ${formatMotorTime(motorData.motorTurnOffTime)}`;
+      if (motorData?.current_on) {
+          if (motorData?.motorTurnOffTime) {
+              return `Scheduled to be OFF at ${formatMotorTime(motorData.motorTurnOffTime)}`;
+          }
+          return "No upcoming auto-off";
       }
-      return "No upcoming auto-off";
+      return "";
     };
 
     return (
@@ -168,6 +171,7 @@ const MotorDetails = () => {
           ) : (
             <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 <MotorStatusCard 
+                    name={motorData.nickname || "Motor 1"}
                     isOn={motorData.current_on} 
                     starttime={motorData.starttime} 
                     nextOffText={getNextOffText()} 
@@ -182,17 +186,17 @@ const MotorDetails = () => {
                         style={[styles.expandBtn, showScheduleForm && styles.expandBtnActive]} 
                         onPress={() => setShowScheduleForm(!showScheduleForm)}
                     >
-                        <CalendarDays color={showScheduleForm ? "#050B1B" : "#FFFFFF"} size={20} />
+                        <CalendarDays color={showScheduleForm ? "#0A203F" : "#FFFFFF"} size={20} />
                         <Text style={[styles.expandBtnText, showScheduleForm && styles.expandBtnTextActive]}>
                             {showScheduleForm ? 'Close Scheduler' : 'Set New Schedule'}
                         </Text>
                         {showScheduleForm ? (
-                            <X color="#050B1B" size={20} />
+                            <X color="#0A203F" size={20} />
                         ) : (
                             <Plus color="#FFFFFF" size={20} />
                         )}
                     </TouchableOpacity>
-  
+
                     {showScheduleForm && (
                         <ScheduleForm 
                             hour={hour} setHour={setHour} minute={minute} setMinute={setMinute} 
@@ -201,7 +205,7 @@ const MotorDetails = () => {
                             onAdd={addSchedule} saving={saving} 
                         />
                     )}
-  
+
                     <ActiveSchedulesList schedules={motorData.schedules} onDelete={deleteSchedule} />
                 </View>
                 <View style={{height: 40}} />
@@ -217,12 +221,31 @@ const MotorDetails = () => {
 
 const CustomToggle = ({ isOn, onToggle, loading }) => (
   <TouchableOpacity
-    activeOpacity={0.8}
+    activeOpacity={1}
     onPress={onToggle}
     disabled={loading}
-    style={[styles.toggleTrack, { backgroundColor: isOn ? '#E5E7EB' : '#374151', opacity: loading ? 0.6 : 1 }]}
+    style={[
+      styles.toggleTrack, 
+      { 
+        backgroundColor: '#F1F5F9', // Light track for both
+        opacity: loading ? 0.6 : 1,
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+      }
+    ]}
   >
-    <View style={[styles.toggleThumb, { backgroundColor: isOn ? '#16A34A' : '#9CA3AF', alignSelf: isOn ? 'flex-end' : 'flex-start' }]} />
+    <View style={[
+      styles.toggleThumb, 
+      { 
+        backgroundColor: isOn ? '#16A34A' : '#94A3B8', 
+        alignSelf: isOn ? 'flex-end' : 'flex-start',
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
+        elevation: 3
+      }
+    ]} />
   </TouchableOpacity>
 );
 
@@ -230,8 +253,8 @@ const GasGauge = () => {
     return (
         <View style={styles.gaugeContainer}>
             <Svg width="120" height="70" viewBox="0 0 120 70">
-                <Path d="M 10 60 A 50 50 0 0 1 110 60" fill="none" stroke="#1E293B" strokeWidth="20" strokeLinecap="flat" />
-                <Path d="M 10 60 A 50 50 0 0 1 60 10" fill="none" stroke="#38BDF8" strokeWidth="20" strokeLinecap="flat" />
+                <Path d="M 10 60 A 50 50 0 0 1 110 60" fill="none" stroke="#1E293B" strokeWidth="20" strokeLinecap="round" />
+                <Path d="M 10 60 A 50 50 0 0 1 60 10" fill="none" stroke="#38BDF8" strokeWidth="20" strokeLinecap="round" />
             </Svg>
         </View>
     );
@@ -248,7 +271,7 @@ const WheelPicker = ({ data, selectedValue, onValueChange, label, containerHeigh
         if (index !== -1 && scrollRef.current) {
             setTimeout(() => {
                 scrollRef.current?.scrollTo({ y: index * itemHeight, animated: false });
-            }, 100);
+            }, 1000);
         }
     }, []);
 
@@ -323,17 +346,23 @@ const MotorHeader = ({ onBack, displayHex }) => (
     </View>
 );
 
-const MotorStatusCard = ({ isOn, starttime, nextOffText, onToggle, loading }) => (
-    <View style={styles.cardContainer}>
-        <Text style={styles.cardTitle}>Motor Status</Text>
-        <View style={styles.statusRow}>
-            <View style={[styles.statusDot, { backgroundColor: isOn ? '#16A34A' : '#6B7280' }]} />
-            <Text style={styles.statusText}>{isOn ? `Turned ON since ${formatMotorTime(starttime)}` : 'Turned OFF'}</Text>
+const MotorStatusCard = ({ name = "Motor 1", isOn, starttime, nextOffText, onToggle, loading }) => (
+    <View style={[styles.cardContainer, { backgroundColor: isOn ? '#003B00' : '#3C3C3C' }]}>
+        <View style={styles.cardContentRow}>
+            <View style={styles.cardLeftColumn}>
+                <Text style={styles.cardTitle}>{name}</Text>
+                <View style={styles.statusRow}>
+                    <View style={[styles.statusDot, { backgroundColor: isOn ? '#16A34A' : '#94A3B8' }]} />
+                    <Text style={styles.statusText}>
+                        {isOn ? 'Turned ON' : 'Turned OFF'} {starttime ? `since ${formatMotorTime(starttime)}` : ''}
+                    </Text>
+                </View>
+            </View>
+            <View style={styles.cardRightColumn}>
+                <CustomToggle isOn={isOn} onToggle={onToggle} loading={loading} />
+            </View>
         </View>
-        <Text style={styles.scheduledText}>{nextOffText}</Text>
-        <View style={styles.toggleWrapper}>
-            <CustomToggle isOn={isOn} onToggle={onToggle} loading={loading} />
-        </View>
+        {nextOffText ? <Text style={styles.scheduledText}>{nextOffText}</Text> : null}
     </View>
 );
 
@@ -435,23 +464,30 @@ const styles = StyleSheet.create({
   bellButton: { backgroundColor: '#F8FAFC', padding: 10, borderRadius: 12, position: 'relative' },
   notificationDot: { position: 'absolute', top: 10, right: 12, width: 6, height: 6, borderRadius: 3, backgroundColor: '#EF4444' },
   scrollContent: { flex: 1 },
-  cardContainer: { backgroundColor: '#050B1B', borderRadius: 16, padding: 24, marginBottom: 16 },
-  cardTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '600', marginBottom: 8 },
-  statusRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
-  statusDot: { width: 8, height: 8, borderRadius: 4, marginRight: 8 },
-  statusText: { color: '#9CA3AF', fontSize: 14 },
-  scheduledText: { color: '#F8FAFC', fontSize: 14, marginTop: 6, marginBottom: 16, fontWeight: '500' },
-  toggleWrapper: { marginTop: 8 },
-  toggleTrack: { width: 140, height: 56, borderRadius: 28, justifyContent: 'center', padding: 4, elevation: 5, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 4 },
-  toggleThumb: { width: 48, height: 48, borderRadius: 24 },
-  gasCard: { paddingVertical: 28 },
+  cardContainer: { borderRadius: 12, padding: 24, marginBottom: 16 },
+  cardContentRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  cardLeftColumn: { flex: 1, paddingRight: 20 },
+  cardRightColumn: { marginLeft: 16 },
+  cardTitle: { color: '#FFFFFF', fontSize: 22, fontWeight: '700', marginBottom: 4 },
+  statusRow: { flexDirection: 'row', alignItems: 'center' },
+  statusDot: { width: 10, height: 10, borderRadius: 5, marginRight: 8 },
+  statusText: { color: '#94A3B8', fontSize: 14, fontWeight: '500' },
+  scheduledText: { color: '#E2E8F0', fontSize: 14, fontWeight: '600', letterSpacing: 0.2, marginTop: 20 },
+  toggleTrack: { width: 68, height: 34, borderRadius: 17, justifyContent: 'center', padding: 2 },
+  toggleThumb: { width: 28, height: 28, borderRadius: 14 },
+  gasCard: { 
+    backgroundColor: '#0A203F', 
+    borderRadius: 12,
+    paddingVertical: 28,
+    marginBottom: 16
+  },
   gasTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
   gasGaugeWrapper: { flex: 1.5 },
   gaugeContainer: { alignItems: 'center', justifyContent: 'center' },
   gasTextWrapper: { flex: 1, alignItems: 'flex-start', justifyContent: 'center' },
-  gasTitle: { color: '#FFFFFF', fontSize: 24, fontWeight: '700' },
-  gasValue: { color: '#9CA3AF', fontSize: 18, marginTop: 4 },
-  gasFooterText: { color: '#16A34A', fontSize: 14, textAlign: 'center', fontWeight: '500' },
+  gasTitle: { color: '#94A3B8', fontSize: 13, fontWeight: '700', letterSpacing: 1 },
+  gasValue: { color: '#FFFFFF', fontSize: 32, fontWeight: '800', marginTop: 4 },
+  gasFooterText: { color: '#10B981', fontSize: 14, textAlign: 'center', fontWeight: '600' },
   center: { justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: '#0F172A', fontSize: 16 },
   tabContainer: { flexDirection: 'row', backgroundColor: '#F1F5F9', borderRadius: 12, padding: 4, marginVertical: 20 },
@@ -460,7 +496,7 @@ const styles = StyleSheet.create({
   tabButtonText: { fontSize: 14, fontWeight: '600', color: '#64748B' },
   tabButtonTextActive: { color: '#0F172A' },
   fullScheduleSection: { marginBottom: 20 },
-  formCard: { backgroundColor: '#050B1B', borderRadius: 24, padding: 24, marginBottom: 24 },
+  formCard: { backgroundColor: '#0A203F', borderRadius: 24, padding: 24, marginBottom: 24 },
   formHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
   formTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '600', marginLeft: 10 },
   timeRow: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 20 },
@@ -480,12 +516,12 @@ const styles = StyleSheet.create({
   dayBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#1E293B', alignItems: 'center', justifyContent: 'center', marginRight: 8 },
   dayBtnActive: { backgroundColor: '#FFFFFF' },
   dayBtnText: { color: '#94A3B8', fontSize: 11, fontWeight: '700' },
-  dayBtnTextActive: { color: '#050B1B' },
+  dayBtnTextActive: { color: '#0A203F' },
   addButton: { backgroundColor: '#149644', height: 50, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   addButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700', marginLeft: 8 },
   subSectionTitle: { fontSize: 18, fontWeight: '700', color: '#0F172A', marginBottom: 16 },
   scheduleRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC', borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#E2E8F0' },
-  scheduleIconBox: { width: 40, height: 40, borderRadius: 12, backgroundColor: '#050B1B', alignItems: 'center', justifyContent: 'center' },
+  scheduleIconBox: { width: 40, height: 40, borderRadius: 12, backgroundColor: '#0A203F', alignItems: 'center', justifyContent: 'center' },
   scheduleInfo: { flex: 1, marginLeft: 16 },
   scheduleTimeText: { fontSize: 18, fontWeight: '700', color: '#0F172A' },
   scheduleTypeText: { fontSize: 12, color: '#64748B', textTransform: 'capitalize', marginTop: 2 },
@@ -493,7 +529,7 @@ const styles = StyleSheet.create({
   emptyText: { color: '#94A3B8', textAlign: 'center', marginTop: 10, fontSize: 14 },
   // Compatibility styles for old components if any
   scheduleItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },
-  scheduleIconWrapper: { width: 48, height: 48, borderRadius: 12, backgroundColor: '#050B1B', alignItems: 'center', justifyContent: 'center' },
+  scheduleIconWrapper: { width: 48, height: 48, borderRadius: 12, backgroundColor: '#0A203F', alignItems: 'center', justifyContent: 'center' },
   scheduleDetails: { flex: 1, marginLeft: 16 },
   scheduleTitle: { fontSize: 16, fontWeight: '600', color: '#0F172A', marginBottom: 4 },
   scheduleSubtitle: { fontSize: 12, color: '#6B7280' },
@@ -613,7 +649,7 @@ const styles = StyleSheet.create({
       right: 24,
   },
   expandBtn: {
-      backgroundColor: '#050B1B',
+      backgroundColor: '#0A203F',
       height: 56,
       borderRadius: 16,
       flexDirection: 'row',
@@ -636,7 +672,7 @@ const styles = StyleSheet.create({
       marginLeft: 12,
   },
   expandBtnTextActive: {
-      color: '#050B1B',
+      color: '#0A203F',
   }
 });
 

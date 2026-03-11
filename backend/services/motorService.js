@@ -30,7 +30,7 @@ const getMotorDoc = async (hexcode) => {
  * @param {string} hexcode   - IoT device hexcode
  * @returns {Promise<{ hexcode: string, user_conn: string }>}
  */
-export const linkMotor = async (username, hexcode) => {
+export const linkMotor = async (username, hexcode, nickname) => {
     const snapshot = await getMotorDoc(hexcode);
     const data = snapshot.data();
 
@@ -42,9 +42,14 @@ export const linkMotor = async (username, hexcode) => {
         throw err;
     }
 
-    await db.collection(MOTORS_COLLECTION).doc(hexcode).update({ user_conn: username });
+    const updates = { user_conn: username };
+    if (nickname) {
+        updates.nickname = nickname;
+    }
 
-    return { hexcode, user_conn: username };
+    await db.collection(MOTORS_COLLECTION).doc(hexcode).update(updates);
+
+    return { hexcode, user_conn: username, nickname };
 };
 
 /**
@@ -80,8 +85,8 @@ export const getMotorStatus = async (username, hexcode) => {
         throw err;
     }
 
-    const { gas_level, current_on, starttime, motorTurnOffTime, schedules } = data;
-    return { hexcode, gas_level, current_on, starttime, motorTurnOffTime, schedules: schedules || [] };
+    const { gas_level, current_on, starttime, motorTurnOffTime, schedules, nickname } = data;
+    return { hexcode, gas_level, current_on, starttime, motorTurnOffTime, schedules: schedules || [], nickname };
 };
 
 /**

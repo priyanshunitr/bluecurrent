@@ -6,11 +6,18 @@ import BottomNav from '../components/BottomNav';
 import { fetchMyMotors } from '../services/api';
 import { formatMotorTime } from '../utils/dateUtils';
 
-const MotorCard = ({ name, status, time, isOnline, onPress }) => (
-  <TouchableOpacity style={styles.cardContainer} onPress={onPress}>
+const MotorCard = ({ name, status, time, isOnline, hexcode, onPress }) => (
+  <TouchableOpacity 
+    style={[
+      styles.cardContainer, 
+      { backgroundColor: isOnline ? '#003B00' : '#3C3C3C' }
+    ]} 
+    onPress={onPress}
+  >
     <Text style={styles.cardTitle}>{name}</Text>
+    <Text style={styles.hexText}>{hexcode}</Text>
     <View style={styles.statusRow}>
-      <View style={[styles.statusDot, { backgroundColor: isOnline ? '#16A34A' : '#6B7280' }]} />
+      <View style={[styles.statusDot, { backgroundColor: isOnline ? '#16A34A' : '#94A3B8' }]} />
       <Text style={styles.statusText}>
         {status} {time}
       </Text>
@@ -48,7 +55,7 @@ const Home = () => {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.logoContainer}>
-            <Shield color="#0F172A" fill="#0F172A" size={28} />
+            <Shield color="#0A203F" fill="#0A203F" size={28} />
             <Text style={styles.brandText}>BLUECURRENT</Text>
           </View>
           <TouchableOpacity style={styles.bellButton}>
@@ -62,17 +69,18 @@ const Home = () => {
           style={styles.motorList} 
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#050B1B" />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#0A203F" />
           }
         >
           {motors.length > 0 ? (
             motors.map((motor, index) => (
               <MotorCard
                 key={motor.hexcode || index}
-                name={`Motor ${index + 1}`}
+                name={motor.nickname || `Motor ${index + 1}`}
                 status={motor.current_on ? "Turned ON" : "Turned OFF"}
                 time={motor.starttime ? `since ${formatMotorTime(motor.starttime)}` : ""}
                 isOnline={motor.current_on}
+                hexcode={motor.hexcode || "#A1A1A1"}
                 onPress={() => handleMotorClick(motor.hexcode)}
               />
             ))
@@ -119,7 +127,7 @@ const styles = StyleSheet.create({
   brandText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#0F172A',
+    color: '#0A203F',
     marginLeft: 10,
     letterSpacing: 1,
   },
@@ -143,16 +151,20 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   cardContainer: {
-    backgroundColor: '#050B1B', // VERY dark navy
-    borderRadius: 16,
+    borderRadius: 12,
     padding: 24,
     marginBottom: 16,
   },
   cardTitle: {
     color: '#FFFFFF',
     fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 8,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  hexText: {
+    color: '#A1A1A1',
+    fontSize: 14,
+    marginBottom: 16,
   },
   statusRow: {
     flexDirection: 'row',
@@ -165,15 +177,15 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   statusText: {
-    color: '#9CA3AF',
+    color: '#FFFFFF',
     fontSize: 14,
   },
   footerContainer: {
     paddingVertical: 20,
   },
   addButton: {
-    backgroundColor: '#050B1B',
-    borderRadius: 30, // Highly rounded
+    backgroundColor: '#0A203F',
+    borderRadius: 12,
     paddingVertical: 18,
     alignItems: 'center',
     justifyContent: 'center',

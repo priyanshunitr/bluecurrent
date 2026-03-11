@@ -35,7 +35,8 @@ router.post('/link', verifyToken, async (req, res) => {
     }
 
     try {
-        const result = await linkMotor(req.user.username, req.body.hexcode.trim());
+        const { hexcode, nickname } = req.body;
+        const result = await linkMotor(req.user.username, hexcode.trim(), nickname);
         return res.status(200).json({ message: 'Motor linked successfully.', motor: result });
     } catch (err) {
         return res.status(err.statusCode || 500).json({ error: err.message });
