@@ -8,6 +8,7 @@ import {
 } from '../schemas/motorSchema.js';
 import {
     linkMotor,
+    unlinkMotor,
     getMotorsByUser,
     getMotorStatus,
     updateGasLevel,
@@ -38,6 +39,21 @@ router.post('/link', verifyToken, async (req, res) => {
         const { hexcode, nickname } = req.body;
         const result = await linkMotor(req.user.username, hexcode.trim(), nickname);
         return res.status(200).json({ message: 'Motor linked successfully.', motor: result });
+    } catch (err) {
+        return res.status(err.statusCode || 500).json({ error: err.message });
+    }
+});
+
+// ─── DELETE /motors/:hexcode/unlink ───────────────────────────────────────────
+/**
+ * Unlink a motor from the authenticated user.
+ * Resets motor to unlinked state (clears user_conn, schedules, timer).
+ * Requires: Authorization: Bearer <token>
+ */
+router.delete('/:hexcode/unlink', verifyToken, async (req, res) => {
+    try {
+        const result = await unlinkMotor(req.user.username, req.params.hexcode);
+        return res.status(200).json(result);
     } catch (err) {
         return res.status(err.statusCode || 500).json({ error: err.message });
     }

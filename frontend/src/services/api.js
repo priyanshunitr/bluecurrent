@@ -146,6 +146,20 @@ export const linkMotor = async (hexcode, nickname) => {
     }
 };
 
+export const unlinkMotor = async (hexcode) => {
+    try {
+        const response = await authenticatedFetch(`/motors/${hexcode}/unlink`, {
+            method: 'DELETE',
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Unlinking failed');
+        return data;
+    } catch (error) {
+        console.error('Unlink Motor Error:', error);
+        throw error;
+    }
+};
+
 export const toggleMotorState = async (hexcode, motor, duration = 0) => {
     try {
         const response = await fetch(`${API_URL}/motors/${hexcode}/motor`, {

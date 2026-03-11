@@ -11,7 +11,7 @@
  *                                (if current_on=false: prev start; if current_on=true: current start)
  *                                null initially
  *   user_conn:        string   — username of linked user (FK → users.username); null initially
- *                                IMMUTABLE: once set, cannot be changed
+ *                                Can be reset to null via unlink operation
  *   schedules:        Array    — list of scheduled on/off events; see Schedule sub-schema below
  *   motorTurnOffTime: Timestamp — Firestore Timestamp when scheduler will auto-turn-off; null if no timer
  * }

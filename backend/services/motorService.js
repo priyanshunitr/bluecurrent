@@ -53,6 +53,36 @@ export const linkMotor = async (username, hexcode, nickname) => {
 };
 
 /**
+ * Unlinks a motor from the authenticated user.
+ * Resets user_conn to null and clears all user-specific data
+ * (schedules, timer, motor state) so the motor can be re-linked.
+ *
+ * @param {string} username  - authenticated user's username
+ * @param {string} hexcode   - IoT device hexcode
+ * @returns {Promise<{ hexcode: string, message: string }>}
+ */
+export const unlinkMotor = async (username, hexcode) => {
+    const snapshot = await getMotorDoc(hexcode);
+    const data = snapshot.data();
+
+    if (data.user_conn !== username) {
+        const err = new Error('You do not have access to this motor.');
+        err.statusCode = 403;
+        throw err;
+    }
+
+    await db.collection(MOTORS_COLLECTION).doc(hexcode).update({
+        user_conn: null,
+        nickname: admin.firestore.FieldValue.delete(),
+        schedules: [],
+        current_on: false,
+        motorTurnOffTime: null,
+    });
+
+    return { hexcode, message: 'Motor unlinked successfully.' };
+};
+
+/**
  * Returns all motors linked to the given user.
  *
  * @param {string} username

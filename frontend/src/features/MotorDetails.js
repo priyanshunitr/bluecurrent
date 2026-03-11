@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { 
     Bell, Cpu, Star, CalendarDays, Calendar, 
-    ChevronRight, Clock, Plus, Trash2 
+    ChevronRight, Clock, Plus, Trash2, Unlink2 
 } from 'lucide-react-native';
 import { useNavigate, useParams } from 'react-router-native';
 import Svg, { Path } from 'react-native-svg';
 import BottomNav from '../components/BottomNav';
-import { fetchMotorStatus, toggleMotorState, updateSchedules } from '../services/api';
+import { fetchMotorStatus, toggleMotorState, updateSchedules, unlinkMotor } from '../services/api';
 import { formatMotorTime } from '../utils/dateUtils';
 import { 
     View, Text, StyleSheet, TouchableOpacity, 
@@ -24,6 +24,7 @@ const MotorDetails = () => {
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [unlinking, setUnlinking] = useState(false);
   
     // Timer Modal State
     const [showTimerModal, setShowTimerModal] = useState(false);
@@ -133,6 +134,33 @@ const MotorDetails = () => {
           Alert.alert('Error', 'Failed to delete schedule');
       }
     };
+
+    const handleUnlink = () => {
+        Alert.alert(
+            'Unlink Motor',
+            `Are you sure you want to unlink "${motorData?.nickname || 'this motor'}"?\n\nThis will remove all schedules and timers. The motor can be linked again later.`,
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Unlink',
+                    style: 'destructive',
+                    onPress: async () => {
+                        setUnlinking(true);
+                        try {
+                            await unlinkMotor(hexcode);
+                            Alert.alert('Done', 'Motor has been unlinked.', [
+                                { text: 'OK', onPress: () => navigate('/') },
+                            ]);
+                        } catch (error) {
+                            Alert.alert('Error', error.message);
+                        } finally {
+                            setUnlinking(false);
+                        }
+                    },
+                },
+            ]
+        );
+    };
   
     const getNextOffText = () => {
       if (motorData?.current_on) {
@@ -209,6 +237,8 @@ const MotorDetails = () => {
 
                     <ActiveSchedulesList schedules={motorData.schedules} onDelete={deleteSchedule} />
                 </View>
+
+                <UnlinkMotorSection onUnlink={handleUnlink} loading={unlinking} />
                 <View style={{height: 40}} />
             </ScrollView>
           )}
@@ -454,6 +484,30 @@ const ActiveSchedulesList = ({ schedules, onDelete }) => (
     </>
 );
 
+const UnlinkMotorSection = ({ onUnlink, loading }) => (
+    <View style={styles.unlinkSection}>
+        <View style={styles.unlinkWarningCard}>
+            <Unlink2 color="#EF4444" size={22} />
+            <View style={styles.unlinkTextWrapper}>
+                <Text style={styles.unlinkTitle}>Danger Zone</Text>
+                <Text style={styles.unlinkDescription}>
+                    Unlinking will remove this motor from your account and clear all schedules.
+                </Text>
+            </View>
+        </View>
+        <TouchableOpacity
+            style={[styles.unlinkButton, loading && { opacity: 0.6 }]}
+            onPress={onUnlink}
+            disabled={loading}
+        >
+            <Unlink2 color="#FFFFFF" size={18} style={{ marginRight: 8 }} />
+            <Text style={styles.unlinkButtonText}>
+                {loading ? 'Unlinking...' : 'Unlink This Motor'}
+            </Text>
+        </TouchableOpacity>
+    </View>
+);
+
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#FFFFFF' },
   container: { flex: 1, paddingHorizontal: 20, backgroundColor: '#FFFFFF' },
@@ -674,6 +728,49 @@ const styles = StyleSheet.create({
   },
   expandBtnTextActive: {
       color: '#0A203F',
+  },
+  // Unlink Motor Styles
+  unlinkSection: {
+      marginTop: 12,
+      marginBottom: 20,
+  },
+  unlinkWarningCard: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      backgroundColor: '#FEF2F2',
+      borderRadius: 16,
+      padding: 16,
+      marginBottom: 12,
+      borderWidth: 1,
+      borderColor: '#FECACA',
+  },
+  unlinkTextWrapper: {
+      flex: 1,
+      marginLeft: 12,
+  },
+  unlinkTitle: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: '#DC2626',
+      marginBottom: 4,
+  },
+  unlinkDescription: {
+      fontSize: 13,
+      color: '#991B1B',
+      lineHeight: 18,
+  },
+  unlinkButton: {
+      backgroundColor: '#DC2626',
+      height: 50,
+      borderRadius: 14,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+  },
+  unlinkButtonText: {
+      color: '#FFFFFF',
+      fontSize: 15,
+      fontWeight: '700',
   }
 });
 
