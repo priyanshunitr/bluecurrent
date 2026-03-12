@@ -53,6 +53,29 @@ export const linkMotor = async (username, hexcode, nickname) => {
 };
 
 /**
+ * Renames a motor associated with the authenticated user.
+ *
+ * @param {string} username  - authenticated user's username
+ * @param {string} hexcode   - IoT device hexcode
+ * @param {string} nickname   - New name for the motor
+ * @returns {Promise<{ hexcode: string, nickname: string, message: string }>}
+ */
+export const renameMotor = async (username, hexcode, nickname) => {
+    const snapshot = await getMotorDoc(hexcode);
+    const data = snapshot.data();
+
+    if (data.user_conn !== username) {
+        const err = new Error('You do not have access to this motor.');
+        err.statusCode = 403;
+        throw err;
+    }
+
+    await db.collection(MOTORS_COLLECTION).doc(hexcode).update({ nickname });
+
+    return { hexcode, nickname, message: 'Motor renamed successfully.' };
+};
+
+/**
  * Unlinks a motor from the authenticated user.
  * Resets user_conn to null and clears all user-specific data
  * (schedules, timer, motor state) so the motor can be re-linked.

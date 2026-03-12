@@ -8,6 +8,7 @@ import {
 } from '../schemas/motorSchema.js';
 import {
     linkMotor,
+    renameMotor,
     unlinkMotor,
     getMotorsByUser,
     getMotorStatus,
@@ -53,6 +54,25 @@ router.post('/link', verifyToken, async (req, res) => {
 router.delete('/:hexcode/unlink', verifyToken, async (req, res) => {
     try {
         const result = await unlinkMotor(req.user.username, req.params.hexcode);
+        return res.status(200).json(result);
+    } catch (err) {
+        return res.status(err.statusCode || 500).json({ error: err.message });
+    }
+});
+
+// ─── PUT /motors/:hexcode/rename ───────────────────────────────────────────
+/**
+ * Rename a motor owned by the authenticated user.
+ * Requires: Authorization: Bearer <token>
+ * Body: { nickname: string }
+ */
+router.put('/:hexcode/rename', verifyToken, async (req, res) => {
+    try {
+        const { nickname } = req.body;
+        if (!nickname || typeof nickname !== 'string' || nickname.trim() === '') {
+            return res.status(400).json({ error: 'Valid nickname is required.' });
+        }
+        const result = await renameMotor(req.user.username, req.params.hexcode, nickname.trim());
         return res.status(200).json(result);
     } catch (err) {
         return res.status(err.statusCode || 500).json({ error: err.message });
