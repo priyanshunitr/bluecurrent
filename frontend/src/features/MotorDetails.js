@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { 
     Bell, Cpu, Star, CalendarDays, Calendar, 
-    ChevronRight, Clock, Plus, Trash2, Unlink2 
+    ChevronRight, ChevronLeft, Clock, Plus, Trash2, Unlink2 
 } from 'lucide-react-native';
 import { useNavigate, useParams } from 'react-router-native';
 import Svg, { Path } from 'react-native-svg';
 import BottomNav from '../components/BottomNav';
-import { fetchMotorStatus, toggleMotorState, updateSchedules, unlinkMotor } from '../services/api';
+import { fetchMotorStatus, toggleMotorState, updateSchedules, unlinkMotor, renameMotor } from '../services/api';
 import { formatMotorTime } from '../utils/dateUtils';
 import { 
     View, Text, StyleSheet, TouchableOpacity, 
@@ -25,6 +25,9 @@ const MotorDetails = () => {
     const [actionLoading, setActionLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [unlinking, setUnlinking] = useState(false);
+    const [renaming, setRenaming] = useState(false);
+    const [showRenameModal, setShowRenameModal] = useState(false);
+    const [newNickname, setNewNickname] = useState('');
   
     // Timer Modal State
     const [showTimerModal, setShowTimerModal] = useState(false);
@@ -137,18 +140,18 @@ const MotorDetails = () => {
 
     const handleUnlink = () => {
         Alert.alert(
-            'Unlink Motor',
-            `Are you sure you want to unlink "${motorData?.nickname || 'this motor'}"?\n\nThis will remove all schedules and timers. The motor can be linked again later.`,
+            'Remove Motor',
+            `Are you sure you want to remove "${motorData?.nickname || 'this motor'}"?\n\nThis will unlink it from your account.`,
             [
                 { text: 'Cancel', style: 'cancel' },
                 {
-                    text: 'Unlink',
+                    text: 'Remove',
                     style: 'destructive',
                     onPress: async () => {
                         setUnlinking(true);
                         try {
                             await unlinkMotor(hexcode);
-                            Alert.alert('Done', 'Motor has been unlinked.', [
+                            Alert.alert('Done', 'Motor has been removed.', [
                                 { text: 'OK', onPress: () => navigate('/') },
                             ]);
                         } catch (error) {
@@ -160,6 +163,29 @@ const MotorDetails = () => {
                 },
             ]
         );
+    };
+
+    const handleRename = async () => {
+        if (!newNickname.trim()) {
+            Alert.alert('Error', 'Please enter a name');
+            return;
+        }
+        setRenaming(true);
+        try {
+            await renameMotor(hexcode, newNickname.trim());
+            setMotorData(prev => ({ ...prev, nickname: newNickname.trim() }));
+            setShowRenameModal(false);
+            Alert.alert('Success', 'Motor renamed successfully');
+        } catch (error) {
+            Alert.alert('Error', error.message);
+        } finally {
+            setRenaming(false);
+        }
+    };
+
+    const openRenameModal = () => {
+        setNewNickname(motorData?.nickname || '');
+        setShowRenameModal(true);
     };
   
     const getNextOffText = () => {
@@ -184,7 +210,11 @@ const MotorDetails = () => {
               onClose={() => setShowTimerModal(false)} 
           />
           
-          <MotorHeader onBack={() => navigate(-1)} displayHex={motorData?.hexcode || '...'} />
+          <MotorHeader 
+              onBack={() => navigate(-1)} 
+              displayHex={motorData?.hexcode || '...'} 
+              name={motorData?.nickname || 'Motor Details'} 
+          />
   
           {loading ? (
             <View style={[styles.container, styles.center]}>
@@ -238,7 +268,20 @@ const MotorDetails = () => {
                     <ActiveSchedulesList schedules={motorData.schedules} onDelete={deleteSchedule} />
                 </View>
 
-                <UnlinkMotorSection onUnlink={handleUnlink} loading={unlinking} />
+                <RenameModal 
+                    visible={showRenameModal} 
+                    value={newNickname} 
+                    onChange={setNewNickname} 
+                    onSave={handleRename} 
+                    onClose={() => setShowRenameModal(false)} 
+                    loading={renaming} 
+                />
+
+                <MotorActionsRow 
+                    onRename={openRenameModal} 
+                    onRemove={handleUnlink} 
+                    unlinking={unlinking} 
+                />
                 <View style={{height: 40}} />
             </ScrollView>
           )}
@@ -361,13 +404,13 @@ const TimerModal = ({ visible, selH, setSelH, selM, setSelM, onStartWithTimer, o
     </Modal>
 );
 
-const MotorHeader = ({ onBack, displayHex }) => (
+const MotorHeader = ({ onBack, displayHex, name }) => (
     <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
-            <Cpu color="#000" size={24} />
+            <ChevronLeft color="#000" size={24} />
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
-            <Text style={styles.headerTitle}>Motor Monitor</Text>
+            <Text style={styles.headerTitle}>{name}</Text>
             <Text style={styles.headerSubtitle}>HEX {displayHex || 'Unknown'}</Text>
         </View>
         <TouchableOpacity style={styles.bellButton}>
@@ -484,26 +527,42 @@ const ActiveSchedulesList = ({ schedules, onDelete }) => (
     </>
 );
 
-const UnlinkMotorSection = ({ onUnlink, loading }) => (
-    <View style={styles.unlinkSection}>
-        <View style={styles.unlinkWarningCard}>
-            <Unlink2 color="#EF4444" size={22} />
-            <View style={styles.unlinkTextWrapper}>
-                <Text style={styles.unlinkTitle}>Danger Zone</Text>
-                <Text style={styles.unlinkDescription}>
-                    Unlinking will remove this motor from your account and clear all schedules.
-                </Text>
+const RenameModal = ({ visible, value, onChange, onSave, onClose, loading }) => (
+    <Modal visible={visible} transparent={true} animationType="fade">
+        <View style={styles.modalOverlayCentered}>
+            <View style={styles.renameModalContent}>
+                <Text style={styles.renameTitle}>Rename Motor</Text>
+                <TextInput
+                    style={styles.renameInput}
+                    value={value}
+                    onChangeText={onChange}
+                    placeholder="Enter new name"
+                    placeholderTextColor="#94A3B8"
+                    autoFocus={true}
+                    autoCapitalize="words"
+                    returnKeyType="done"
+                    onSubmitEditing={onSave}
+                />
+                <View style={styles.renameActions}>
+                    <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
+                        <Text style={styles.cancelBtnText}>Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.saveBtn} onPress={onSave} disabled={loading}>
+                        {loading ? <ActivityIndicator color="#FFFFFF" size="small" /> : <Text style={styles.saveBtnText}>Save</Text>}
+                    </TouchableOpacity>
+                </View>
             </View>
         </View>
-        <TouchableOpacity
-            style={[styles.unlinkButton, loading && { opacity: 0.6 }]}
-            onPress={onUnlink}
-            disabled={loading}
-        >
-            <Unlink2 color="#FFFFFF" size={18} style={{ marginRight: 8 }} />
-            <Text style={styles.unlinkButtonText}>
-                {loading ? 'Unlinking...' : 'Unlink This Motor'}
-            </Text>
+    </Modal>
+);
+
+const MotorActionsRow = ({ onRename, onRemove, unlinking }) => (
+    <View style={styles.actionsRow}>
+        <TouchableOpacity style={styles.actionBtnRename} onPress={onRename}>
+            <Text style={styles.actionBtnText}>Rename Motor</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.actionBtnRemove, unlinking && { opacity: 0.7 }]} onPress={onRemove} disabled={unlinking}>
+            {unlinking ? <ActivityIndicator color="#FFFFFF" size="small" /> : <Text style={styles.actionBtnText}>Remove Motor</Text>}
         </TouchableOpacity>
     </View>
 );
@@ -729,48 +788,112 @@ const styles = StyleSheet.create({
   expandBtnTextActive: {
       color: '#0A203F',
   },
-  // Unlink Motor Styles
-  unlinkSection: {
-      marginTop: 12,
-      marginBottom: 20,
+  // Motor Action Styles (Rename & Remove)
+  actionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingTop: 10,
+    marginBottom: 20,
   },
-  unlinkWarningCard: {
-      flexDirection: 'row',
-      alignItems: 'flex-start',
-      backgroundColor: '#FEF2F2',
-      borderRadius: 16,
-      padding: 16,
-      marginBottom: 12,
-      borderWidth: 1,
-      borderColor: '#FECACA',
+  actionBtnRename: {
+    backgroundColor: '#0A203F',
+    flex: 1,
+    height: 56,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
   },
-  unlinkTextWrapper: {
-      flex: 1,
-      marginLeft: 12,
+  actionBtnRemove: {
+    backgroundColor: '#DC2626',
+    flex: 1,
+    height: 56,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
   },
-  unlinkTitle: {
-      fontSize: 15,
-      fontWeight: '700',
-      color: '#DC2626',
-      marginBottom: 4,
+  actionBtnText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'center',
   },
-  unlinkDescription: {
-      fontSize: 13,
-      color: '#991B1B',
-      lineHeight: 18,
+  // Rename Modal Styles
+  modalOverlayCentered: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
   },
-  unlinkButton: {
-      backgroundColor: '#DC2626',
-      height: 50,
-      borderRadius: 14,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
+  renameModalContent: {
+    backgroundColor: '#FFFFFF',
+    width: '100%',
+    padding: 24,
+    borderRadius: 24,
+    alignItems: 'center',
+    elevation: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
   },
-  unlinkButtonText: {
-      color: '#FFFFFF',
-      fontSize: 15,
-      fontWeight: '700',
+  renameTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 20,
+  },
+  renameInput: {
+    width: '100%',
+    height: 54,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: '#0F172A',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 24,
+  },
+  renameActions: {
+    flexDirection: 'row',
+    width: '100%',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  cancelBtn: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    marginRight: 8,
+  },
+  cancelBtnText: {
+    color: '#64748B',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  saveBtn: {
+    backgroundColor: '#0A203F',
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+    borderRadius: 14,
+    minWidth: 100,
+    alignItems: 'center',
+  },
+  saveBtnText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
   }
 });
 
