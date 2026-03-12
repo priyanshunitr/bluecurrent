@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-native';
 import BottomNav from '../components/BottomNav';
 import { fetchMyMotors } from '../services/api';
 import { formatMotorTime } from '../utils/dateUtils';
+import { createNotificationChannel, syncMotorNotifications } from '../services/notificationService';
 
 const MotorCard = ({ name, status, time, isOnline, hexcode, onPress }) => (
   <TouchableOpacity 
@@ -34,9 +35,13 @@ const Home = () => {
   const loadMotors = async () => {
     const data = await fetchMyMotors();
     setMotors(data);
+    // Sync notifications with current motor states
+    syncMotorNotifications(data);
   };
 
   useEffect(() => {
+    // Create Android notification channel on first mount
+    createNotificationChannel();
     loadMotors();
   }, []);
 

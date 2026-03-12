@@ -8,6 +8,7 @@ import Svg, { Path } from 'react-native-svg';
 import BottomNav from '../components/BottomNav';
 import { fetchMotorStatus, toggleMotorState, updateSchedules, unlinkMotor, renameMotor } from '../services/api';
 import { formatMotorTime } from '../utils/dateUtils';
+import { showMotorOnNotification, cancelMotorOnNotification } from '../services/notificationService';
 import { 
     View, Text, StyleSheet, TouchableOpacity, 
     ScrollView, TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, 
@@ -56,6 +57,12 @@ const MotorDetails = () => {
       const data = await fetchMotorStatus(hexcode);
       if (data) {
         setMotorData(data);
+        // Sync notification with current motor state
+        if (data.current_on) {
+            showMotorOnNotification(hexcode, data.nickname || 'Motor', data.starttime);
+        } else {
+            cancelMotorOnNotification(hexcode);
+        }
       }
       setLoading(false);
     };
@@ -323,12 +330,32 @@ const CustomToggle = ({ isOn, onToggle, loading }) => (
   </TouchableOpacity>
 );
 
-const GasGauge = () => {
+const GasGauge = ({ gas_level }) => {
+    // Max possible gas value is 4095
+    const radius = 50;
+    const circumference = Math.PI * radius; 
+    
+    // Normalize gas_level (0 to 4095)
+    // Handle N/A or null by treating as 0
+    const safeGasLevel = typeof gas_level === 'number' ? gas_level : 0;
+    const percentage = Math.min(Math.max(safeGasLevel / 4095, 0), 1);
+    
+    // Offset calculation
+    const strokeDashoffset = circumference - (percentage * circumference);
+
     return (
         <View style={styles.gaugeContainer}>
             <Svg width="120" height="70" viewBox="0 0 120 70">
-                <Path d="M 10 60 A 50 50 0 0 1 110 60" fill="none" stroke="#1E293B" strokeWidth="20" strokeLinecap="round" />
-                <Path d="M 10 60 A 50 50 0 0 1 60 10" fill="none" stroke="#38BDF8" strokeWidth="20" strokeLinecap="round" />
+                <Path d="M 10 60 A 50 50 0 0 1 110 60" fill="none" stroke="#1E293B" strokeWidth="20" strokeLinecap="butt" />
+                <Path 
+                    d="M 10 60 A 50 50 0 0 1 110 60" 
+                    fill="none" 
+                    stroke="#38BDF8" 
+                    strokeWidth="20" 
+                    strokeLinecap="butt"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={strokeDashoffset}
+                />
             </Svg>
         </View>
     );
@@ -443,13 +470,13 @@ const MotorStatusCard = ({ name = "Motor 1", isOn, starttime, nextOffText, onTog
 const GasGaugeCard = ({ gas_level }) => (
     <View style={[styles.cardContainer, styles.gasCard]}>
         <View style={styles.gasTopRow}>
-            <View style={styles.gasGaugeWrapper}><GasGauge /></View>
+            <View style={styles.gasGaugeWrapper}><GasGauge gas_level={gas_level} /></View>
             <View style={styles.gasTextWrapper}>
                 <Text style={styles.gasTitle}>GAS</Text>
                 <Text style={styles.gasValue}>{gas_level ?? 'N/A'}</Text>
             </View>
         </View>
-        <Text style={styles.gasFooterText}>Gas is in the safe limit that is 1600</Text>
+        <Text style={styles.gasFooterText}>Gas is in the safe limit that is 3000</Text>
     </View>
 );
 
