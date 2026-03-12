@@ -146,6 +146,21 @@ export const linkMotor = async (hexcode, nickname) => {
     }
 };
 
+export const renameMotor = async (hexcode, nickname) => {
+    try {
+        const response = await authenticatedFetch(`/motors/${hexcode}/rename`, {
+            method: 'PUT',
+            body: JSON.stringify({ nickname }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Renaming failed');
+        return data;
+    } catch (error) {
+        console.error('Rename Motor Error:', error);
+        throw error;
+    }
+};
+
 export const unlinkMotor = async (hexcode) => {
     try {
         const response = await authenticatedFetch(`/motors/${hexcode}/unlink`, {
