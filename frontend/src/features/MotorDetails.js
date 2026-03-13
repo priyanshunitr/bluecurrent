@@ -304,20 +304,16 @@ const MotorDetails = () => {
                 <GasGaugeCard gas_level={motorData.gas_level} />
   
                 <View style={styles.fullScheduleSection}>
-                    <TouchableOpacity 
-                        style={[styles.expandBtn, showScheduleForm && styles.expandBtnActive]} 
-                        onPress={() => setShowScheduleForm(!showScheduleForm)}
-                    >
-                        <CalendarDays color={showScheduleForm ? "#0A203F" : "#FFFFFF"} size={20} />
-                        <Text style={[styles.expandBtnText, showScheduleForm && styles.expandBtnTextActive]}>
-                            {showScheduleForm ? 'Close Scheduler' : 'Set New Schedule'}
-                        </Text>
-                        {showScheduleForm ? (
-                            <X color="#0A203F" size={20} />
-                        ) : (
+                    {!showScheduleForm && (
+                        <TouchableOpacity 
+                            style={styles.expandBtn} 
+                            onPress={() => setShowScheduleForm(true)}
+                        >
+                            <CalendarDays color="#FFFFFF" size={20} />
+                            <Text style={styles.expandBtnText}>Set New Schedule</Text>
                             <Plus color="#FFFFFF" size={20} />
-                        )}
-                    </TouchableOpacity>
+                        </TouchableOpacity>
+                    )}
 
                     {showScheduleForm && (
                         <ScheduleForm 
@@ -760,7 +756,7 @@ const styles = StyleSheet.create({
   tabButtonText: { fontSize: 14, fontWeight: '600', color: '#64748B' },
   tabButtonTextActive: { color: '#0F172A' },
   fullScheduleSection: { marginBottom: 20 },
-  formCard: { backgroundColor: '#0A203F', borderRadius: 24, padding: 24, marginBottom: 24 },
+  formCard: { backgroundColor: '#0A203F', borderRadius: 12, padding: 24, marginBottom: 24 },
   dayBtnTextActive: { color: '#FFFFFF' },
   formHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 30 },
   headerLeft: { flexDirection: 'row', alignItems: 'center' },
@@ -955,7 +951,7 @@ const styles = StyleSheet.create({
   expandBtn: {
       backgroundColor: '#0A203F',
       height: 56,
-      borderRadius: 16,
+      borderRadius: 12,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
