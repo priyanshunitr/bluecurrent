@@ -59,7 +59,7 @@ const MotorDetails = () => {
         setMotorData(data);
         // Sync notification with current motor state
         if (data.current_on) {
-            showMotorOnNotification(hexcode, data.nickname || 'Motor', data.starttime);
+            showMotorOnNotification(hexcode, data.nickname || `Motor ${hexcode}`, data.starttime);
         } else {
             cancelMotorOnNotification(hexcode);
         }

@@ -43,8 +43,8 @@ export const showMotorOnNotification = async (hexcode, nickname, starttime) => {
 
         await notifee.displayNotification({
             id: `motor-on-${hexcode}`,
-            title: `⚡ ${nickname}`,
-            body: `Turned ON since ${timeStr}`,
+            title: `${nickname} - ON`,
+            body: `The motor "${nickname}" has been running since ${timeStr}.`,
             android: {
                 channelId: CHANNEL_ID,
                 ongoing: true,
@@ -100,7 +100,7 @@ export const syncMotorNotifications = async (motors) => {
                 onHexcodes.add(motor.hexcode);
                 await showMotorOnNotification(
                     motor.hexcode,
-                    motor.nickname || 'Motor',
+                    motor.nickname || `Motor ${motor.hexcode}`,
                     motor.starttime,
                 );
             }
