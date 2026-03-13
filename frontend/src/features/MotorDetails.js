@@ -8,7 +8,6 @@ import Svg, { Path } from 'react-native-svg';
 import BottomNav from '../components/BottomNav';
 import { fetchMotorStatus, toggleMotorState, updateSchedules, unlinkMotor, renameMotor } from '../services/api';
 import { formatMotorTime } from '../utils/dateUtils';
-import { showMotorOnNotification, cancelMotorOnNotification } from '../services/notificationService';
 import { 
     View, Text, StyleSheet, TouchableOpacity, 
     ScrollView, TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, 
@@ -94,12 +93,6 @@ const MotorDetails = () => {
       const data = await fetchMotorStatus(hexcode);
       if (data) {
         setMotorData(data);
-        // Sync notification with current motor state
-        if (data.current_on) {
-            showMotorOnNotification(hexcode, data.nickname || `Motor ${hexcode}`, data.starttime);
-        } else {
-            cancelMotorOnNotification(hexcode);
-        }
       }
       setLoading(false);
     };

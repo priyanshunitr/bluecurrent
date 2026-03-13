@@ -52,8 +52,7 @@ export const showMotorOnNotification = async (hexcode, nickname, starttime) => {
                 smallIcon: 'ic_launcher',
                 color: '#16A34A',
                 pressAction: { id: 'default' },
-                timestamp: Date.now(),
-                showTimestamp: true,
+                onlyAlertOnce: true,
             },
         });
     } catch (error) {
