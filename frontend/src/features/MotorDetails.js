@@ -71,11 +71,13 @@ const MotorDetails = () => {
     const [selH, setSelH] = useState(0);
     const [selM, setSelM] = useState(15);
   
-    // Schedule Form State (Numeric for WheelPickers)
+    // Schedule Form State
     const [hour, setHour] = useState(8);
     const [minute, setMinute] = useState(30);
+    const [ampm, setAmpm] = useState('AM');
+    const [runH, setRunH] = useState(0);
+    const [runM, setRunM] = useState(30);
     const [type, setType] = useState('everyday'); // everyday, weekly, particular
-    const [duration, setDuration] = useState(30);
     const [selectedDays, setSelectedDays] = useState([new Date().getDay()]);
     const [date, setDate] = useState({ d: new Date().getDate(), m: new Date().getMonth() + 1, y: 26 });
   
@@ -132,6 +134,12 @@ const MotorDetails = () => {
     };
   
     const addSchedule = async () => {
+      // Convert to 24h format for backend
+      let h24 = (parseInt(hour) % 12);
+      if (ampm === 'PM') h24 += 12;
+
+      const totalDuration = (parseInt(runH) * 60) + parseInt(runM);
+
       let newSchedules = [];
       if (type === 'weekly') {
           if (selectedDays.length === 0) {
@@ -140,20 +148,24 @@ const MotorDetails = () => {
           }
           newSchedules = selectedDays.map((day, idx) => ({
               id: (Date.now() + idx).toString(),
-              hour, minute, type,
+              hour: h24, 
+              minute: parseInt(minute), 
+              type,
               day,
               date: 0, month: 0, year: 0,
-              duration: duration || 0,
+              duration: totalDuration || 0,
           }));
       } else {
           newSchedules = [{
               id: Date.now().toString(),
-              hour, minute, type,
+              hour: h24, 
+              minute: parseInt(minute), 
+              type,
               day: 0,
               date: type === 'particular' ? date.d : 0,
               month: type === 'particular' ? date.m : 0,
               year: type === 'particular' ? date.y : 0,
-              duration: duration || 0,
+              duration: totalDuration || 0,
           }];
       }
       const updated = [...(motorData.schedules || []), ...newSchedules];
@@ -310,9 +322,10 @@ const MotorDetails = () => {
                     {showScheduleForm && (
                         <ScheduleForm 
                             hour={hour} setHour={setHour} minute={minute} setMinute={setMinute} 
-                            duration={duration} setDuration={setDuration} type={type} setType={setType} 
+                            ampm={ampm} setAmpm={setAmpm} runH={runH} setRunH={setRunH} 
+                            runM={runM} setRunM={setRunM} type={type} setType={setType} 
                             date={date} setDate={setDate} selectedDays={selectedDays} onToggleDay={toggleDay} 
-                            onAdd={addSchedule} saving={saving} 
+                            onAdd={addSchedule} saving={saving} onClose={() => setShowScheduleForm(false)}
                         />
                     )}
 
@@ -405,8 +418,7 @@ const GasGauge = ({ gas_level }) => {
     );
 };
 
-const WheelPicker = ({ data, selectedValue, onValueChange, label, containerHeight = 120 }) => {
-    const itemHeight = 40;
+const WheelPicker = ({ data, selectedValue, onValueChange, label, containerHeight = 120, itemHeight = 40, itemWidth = 60 }) => {
     const padding = (containerHeight - itemHeight) / 2;
     const scrollRef = React.useRef(null);
 
@@ -416,12 +428,12 @@ const WheelPicker = ({ data, selectedValue, onValueChange, label, containerHeigh
         if (index !== -1 && scrollRef.current) {
             setTimeout(() => {
                 scrollRef.current?.scrollTo({ y: index * itemHeight, animated: false });
-            }, 1000);
+            }, 500);
         }
-    }, []);
+    }, []); // Trigger on mount
 
     return (
-        <View style={styles.wheelWrapper}>
+        <View style={[styles.wheelWrapper, { width: itemWidth }]}>
             <ScrollView
                 ref={scrollRef}
                 snapToInterval={itemHeight}
@@ -440,12 +452,12 @@ const WheelPicker = ({ data, selectedValue, onValueChange, label, containerHeigh
                             styles.wheelItemText, 
                             selectedValue === item && styles.wheelItemTextActive
                         ]}>
-                            {item.toString().padStart(2, '0')}
+                            {typeof item === 'number' ? item.toString().padStart(2, '0') : item}
                         </Text>
                     </View>
                 ))}
             </ScrollView>
-            <Text style={styles.wheelLabel}>{label}</Text>
+            {label && <Text style={styles.wheelLabel}>{label}</Text>}
         </View>
     );
 };
@@ -525,34 +537,69 @@ const GasGaugeCard = ({ gas_level }) => (
 );
 
 const ScheduleForm = ({ 
-    hour, setHour, minute, setMinute, duration, setDuration, type, setType, 
-    date, setDate, selectedDays = [], onToggleDay = () => {}, onAdd, saving 
+    hour, setHour, minute, setMinute, ampm, setAmpm, runH, setRunH, runM, setRunM, 
+    type, setType, date, setDate, selectedDays = [], onToggleDay = () => {}, onAdd, saving, onClose
 }) => {
-    const hoursArr = Array.from({length: 24}, (_, i) => i);
-    const minsArr = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
-    const durationsArr = [0, 5, 10, 15, 30, 45, 60, 90, 120];
+    const hoursArr = Array.from({length: 12}, (_, i) => i + 1);
+    const minsArr = Array.from({length: 60}, (_, i) => i);
+    const runHArr = Array.from({length: 13}, (_, i) => i);
+    const runMArr = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+
     return (
         <View style={styles.formCard}>
-            <View style={styles.formHeader}><CalendarDays color="#FFFFFF" size={20} /><Text style={styles.formTitle}>Set Schedule</Text></View>
-            <View style={[styles.pickersContainer, {height: 120, marginBottom: 30}]}>
-                <View style={[styles.pickerIndicator, {top: 38, height: 44}]} pointerEvents="none" />
-                <WheelPicker label="hr" data={hoursArr} selectedValue={hour} onValueChange={setHour} containerHeight={120} />
-                <WheelPicker label="min" data={minsArr} selectedValue={minute} onValueChange={setMinute} containerHeight={120} />
-                <WheelPicker label="run" data={durationsArr} selectedValue={duration} onValueChange={setDuration} containerHeight={120} />
+            <View style={styles.formHeader}>
+                <View style={styles.headerLeft}>
+                    <CalendarDays color="#FFFFFF" size={24} />
+                    <Text style={styles.formTitle}>Set Schedule</Text>
+                </View>
+                <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+                    <X color="#FFFFFF" size={24} />
+                </TouchableOpacity>
             </View>
+
+            {/* Type Selector (Tabs) */}
             <View style={styles.typeSelector}>
                 {['everyday', 'weekly', 'particular'].map(t => (
-                    <TouchableOpacity key={t} style={[styles.typeBtn, type === t && styles.typeBtnActive]} onPress={() => setType(t)}>
-                        <Text style={[styles.typeBtnText, type === t && styles.typeBtnTextActive]}>{t.toUpperCase()}</Text>
+                    <TouchableOpacity 
+                        key={t} 
+                        style={[styles.typeBtn, type === t && styles.typeBtnActive]} 
+                        onPress={() => setType(t)}
+                    >
+                        <Text style={[styles.typeBtnText, type === t && styles.typeBtnTextActive]}>
+                            {t.toUpperCase()}
+                        </Text>
                     </TouchableOpacity>
                 ))}
             </View>
+
+            {/* Start Time Section */}
+            <Text style={styles.sectionLabel}>Start Time</Text>
+            <View style={styles.darkPickerContainer}>
+                <View style={styles.pickerOverlay} pointerEvents="none" />
+                <WheelPicker data={hoursArr} selectedValue={hour} onValueChange={setHour} itemWidth={60} />
+                <Text style={styles.pickerSeparator}>:</Text>
+                <WheelPicker data={minsArr} selectedValue={minute} onValueChange={setMinute} itemWidth={60} />
+                <View style={styles.ampmWrapper}>
+                    <WheelPicker data={['AM', 'PM']} selectedValue={ampm} onValueChange={setAmpm} itemWidth={60} />
+                </View>
+            </View>
+
+            {/* Run Time Section */}
+            <Text style={styles.sectionLabel}>Run Time</Text>
+            <View style={styles.darkPickerContainer}>
+                <View style={styles.pickerOverlay} pointerEvents="none" />
+                <WheelPicker data={runHArr} selectedValue={runH} onValueChange={setRunH} itemWidth={60} />
+                <Text style={styles.unitLabel}>HRS</Text>
+                <WheelPicker data={runMArr} selectedValue={runM} onValueChange={setRunM} itemWidth={60} />
+                <Text style={styles.unitLabel}>MIN</Text>
+            </View>
+
+            {/* Particular/Weekly conditional UI */}
             {type === 'particular' && (
-                <View style={[styles.pickersContainer, {height: 120, marginBottom: 25}]}>
-                    <View style={[styles.pickerIndicator, {top: 38, height: 44}]} pointerEvents="none" />
-                    <WheelPicker label="D" data={Array.from({length: 31}, (_, i) => i+1)} selectedValue={date.d} onValueChange={v => setDate({...date, d: v})} containerHeight={120} />
-                    <WheelPicker label="M" data={Array.from({length: 12}, (_, i) => i+1)} selectedValue={date.m} onValueChange={v => setDate({...date, m: v})} containerHeight={120} />
-                    <WheelPicker label="Y" data={[25, 26, 27, 28]} selectedValue={date.y} onValueChange={v => setDate({...date, y: v})} containerHeight={120} />
+                <View style={[styles.darkPickerContainer, { marginTop: 10 }]}>
+                    <WheelPicker label="D" data={Array.from({length: 31}, (_, i) => i+1)} selectedValue={date.d} onValueChange={v => setDate({...date, d: v})} itemWidth={50} />
+                    <WheelPicker label="M" data={Array.from({length: 12}, (_, i) => i+1)} selectedValue={date.m} onValueChange={v => setDate({...date, m: v})} itemWidth={50} />
+                    <WheelPicker label="Y" data={[25, 26, 27, 28]} selectedValue={date.y} onValueChange={v => setDate({...date, y: v})} itemWidth={50} />
                 </View>
             )}
             {type === 'weekly' && (
@@ -569,8 +616,13 @@ const ScheduleForm = ({
                   </ScrollView>
                 </View>
             )}
+
             <TouchableOpacity style={styles.addButton} onPress={onAdd} disabled={saving}>
-                {saving ? <ActivityIndicator color="#FFFFFF" /> : <><Plus color="#FFFFFF" size={20} /><Text style={styles.addButtonText}>Save Schedule</Text></>}
+                {saving ? (
+                    <ActivityIndicator color="#0A203F" />
+                ) : (
+                    <Text style={styles.addButtonText}>SET SCHEDULE</Text>
+                )}
             </TouchableOpacity>
         </View>
     );
@@ -682,19 +734,47 @@ const styles = StyleSheet.create({
   tabButtonTextActive: { color: '#0F172A' },
   fullScheduleSection: { marginBottom: 20 },
   formCard: { backgroundColor: '#0A203F', borderRadius: 24, padding: 24, marginBottom: 24 },
-  formHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-  formTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '600', marginLeft: 10 },
-  timeRow: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 20 },
-  inputGroup: { flex: 1 },
-  inputLabel: { color: '#94A3B8', fontSize: 12, marginBottom: 8, fontWeight: '500' },
-  timeInput: { backgroundColor: '#1E293B', borderRadius: 12, height: 50, color: '#FFFFFF', fontSize: 20, fontWeight: '700', textAlign: 'center' },
-  timeSeparator: { color: '#94A3B8', fontSize: 28, marginHorizontal: 8, paddingBottom: 5 },
-  durationInput: { backgroundColor: '#1E293B', borderRadius: 12, height: 50, color: '#FFFFFF', fontSize: 14, textAlign: 'center' },
-  typeSelector: { flexDirection: 'row', backgroundColor: '#1E293B', borderRadius: 12, padding: 4, marginBottom: 20 },
-  typeBtn: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 10 },
-  typeBtnActive: { backgroundColor: '#149644' },
-  typeBtnText: { color: '#94A3B8', fontSize: 11, fontWeight: '700' },
-  typeBtnTextActive: { color: '#FFFFFF' },
+  dayBtnTextActive: { color: '#FFFFFF' },
+  formHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 30 },
+  headerLeft: { flexDirection: 'row', alignItems: 'center' },
+  formTitle: { color: '#FFFFFF', fontSize: 22, fontWeight: '700', marginLeft: 12 },
+  closeBtn: { padding: 4 },
+  sectionLabel: { color: '#FFFFFF', fontSize: 16, fontWeight: '600', marginBottom: 12, marginTop: 10 },
+  darkPickerContainer: {
+    backgroundColor: '#001021',
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    height: 100,
+    marginBottom: 20,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  pickerOverlay: {
+    position: 'absolute',
+    top: 30, // center it
+    left: 10,
+    right: 10,
+    height: 40,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 8,
+  },
+  pickerSeparator: { color: '#FFFFFF', fontSize: 24, fontWeight: '700', marginHorizontal: 10 },
+  ampmWrapper: { marginLeft: 20 },
+  unitLabel: { color: '#64748B', fontSize: 14, fontWeight: '700', marginHorizontal: 8 },
+  typeSelector: { 
+    flexDirection: 'row', 
+    backgroundColor: '#001021', 
+    borderRadius: 12, 
+    padding: 6, 
+    marginBottom: 30 
+  },
+  typeBtn: { flex: 1, paddingVertical: 12, alignItems: 'center', borderRadius: 8 },
+  typeBtnActive: { backgroundColor: '#FFFFFF' },
+  typeBtnText: { color: '#94A3B8', fontSize: 12, fontWeight: '700' },
+  typeBtnTextActive: { color: '#001A33' },
   dateRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
   dateInput: { backgroundColor: '#1E293B', borderRadius: 8, width: '30%', height: 40, color: '#FFFFFF', textAlign: 'center' },
   daySelector: { flexDirection: 'row', marginBottom: 20 },
@@ -702,8 +782,15 @@ const styles = StyleSheet.create({
   dayBtnActive: { backgroundColor: '#FFFFFF' },
   dayBtnText: { color: '#94A3B8', fontSize: 11, fontWeight: '700' },
   dayBtnTextActive: { color: '#0A203F' },
-  addButton: { backgroundColor: '#149644', height: 50, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
-  addButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700', marginLeft: 8 },
+  addButton: { 
+    backgroundColor: '#FFFFFF', 
+    height: 56, 
+    borderRadius: 12, 
+    alignItems: 'center', 
+    justifyContent: 'center',
+    marginTop: 20
+  },
+  addButtonText: { color: '#001A33', fontSize: 18, fontWeight: '800', letterSpacing: 0.5 },
   subSectionTitle: { fontSize: 18, fontWeight: '700', color: '#0F172A', marginBottom: 16 },
   scheduleRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC', borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#E2E8F0' },
   scheduleIconBox: { width: 40, height: 40, borderRadius: 12, backgroundColor: '#0A203F', alignItems: 'center', justifyContent: 'center' },
@@ -793,12 +880,9 @@ const styles = StyleSheet.create({
   },
   wheelLabel: {
     color: '#94A3B8',
-    fontSize: 12, // Slightly smaller to avoid overlap
-    marginLeft: 0, 
-    transform: [{ translateX: -20 }],
+    fontSize: 10,
     fontWeight: '600',
-    paddingBottom: 2,
-    opacity: 0.8,
+    marginTop: 4,
   },
   startWithTimerBtn: {
     backgroundColor: '#149644',
