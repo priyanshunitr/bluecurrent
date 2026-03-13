@@ -594,21 +594,43 @@ const ScheduleForm = ({
                 </>
             )}
             {type === 'weekly' && (
-                <>
-                    <Text style={styles.sectionLabel}>Select Days</Text>
-                    <View style={styles.daySelectorWrapper}>
-                      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.daySelector}>
-                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d, i) => {
-                            const isSelected = Array.isArray(selectedDays) && selectedDays.indexOf(i) !== -1;
-                            return (
-                                <TouchableOpacity key={d} style={[styles.dayBtn, isSelected && styles.dayBtnActive]} onPress={() => onToggleDay(i)}>
-                                    <Text style={[styles.dayBtnText, isSelected && styles.dayBtnTextActive]}>{d}</Text>
-                                </TouchableOpacity>
-                            );
-                        })}
-                      </ScrollView>
-                    </View>
-                </>
+                <View style={styles.weeklyGrid}>
+                    {[
+                        { label: 'MON', val: 1 },
+                        { label: 'TUE', val: 2 },
+                        { label: 'WED', val: 3 },
+                        { label: 'THURS', val: 4 }
+                    ].map((d) => {
+                        const isSelected = Array.isArray(selectedDays) && selectedDays.indexOf(d.val) !== -1;
+                        return (
+                            <TouchableOpacity 
+                                key={d.label} 
+                                style={[styles.dayBox, isSelected && styles.dayBoxActive]} 
+                                onPress={() => onToggleDay(d.val)}
+                            >
+                                <Text style={[styles.dayText, isSelected && styles.dayTextActive]}>{d.label}</Text>
+                            </TouchableOpacity>
+                        );
+                    })}
+                    {[
+                        { label: 'FRI', val: 5 },
+                        { label: 'SAT', val: 6 },
+                        { label: 'SUN', val: 0 }
+                    ].map((d) => {
+                        const isSelected = Array.isArray(selectedDays) && selectedDays.indexOf(d.val) !== -1;
+                        return (
+                            <TouchableOpacity 
+                                key={d.label} 
+                                style={[styles.dayBox, isSelected && styles.dayBoxActive]} 
+                                onPress={() => onToggleDay(d.val)}
+                            >
+                                <Text style={[styles.dayText, isSelected && styles.dayTextActive]}>{d.label}</Text>
+                            </TouchableOpacity>
+                        );
+                    })}
+                    {/* Placeholder for grid alignment */}
+                    <View style={[styles.dayBox, { backgroundColor: 'transparent' }]} />
+                </View>
             )}
 
             {/* Start Time Section */}
@@ -809,12 +831,25 @@ const styles = StyleSheet.create({
   typeBtnTextActive: { color: '#001A33' },
   dateRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
   dateInput: { backgroundColor: '#1E293B', borderRadius: 8, width: '30%', height: 40, color: '#FFFFFF', textAlign: 'center' },
-  daySelectorWrapper: { marginBottom: 30, marginTop: 10 },
-  daySelector: { paddingRight: 20 },
-  dayBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#001A33', alignItems: 'center', justifyContent: 'center', marginRight: 12, borderWidth: 1, borderColor: '#1E293B', elevation: 2 },
-  dayBtnActive: { backgroundColor: '#FFFFFF', borderColor: '#FFFFFF' },
-  dayBtnText: { color: '#94A3B8', fontSize: 11, fontWeight: '700' },
-  dayBtnTextActive: { color: '#001A33' },
+  weeklyGrid: { 
+    flexDirection: 'row', 
+    flexWrap: 'wrap', 
+    justifyContent: 'space-between',
+    marginTop: 10,
+    marginBottom: 30 
+  },
+  dayBox: { 
+    width: '23%', 
+    height: 48, 
+    backgroundColor: '#000000', 
+    borderRadius: 8, 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    marginBottom: 10,
+  },
+  dayBoxActive: { backgroundColor: '#FFFFFF' },
+  dayText: { color: '#FFFFFF', fontSize: 11, fontWeight: '700' },
+  dayTextActive: { color: '#000000' },
   addButton: { 
     backgroundColor: '#FFFFFF', 
     height: 56, 
