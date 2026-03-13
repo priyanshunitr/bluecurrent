@@ -428,36 +428,42 @@ const WheelPicker = ({ data, selectedValue, onValueChange, label, containerHeigh
         if (index !== -1 && scrollRef.current) {
             setTimeout(() => {
                 scrollRef.current?.scrollTo({ y: index * itemHeight, animated: false });
-            }, 500);
+            }, 300);
         }
     }, []); // Trigger on mount
 
     return (
-        <View style={[styles.wheelWrapper, { width: itemWidth }]}>
-            <ScrollView
-                ref={scrollRef}
-                snapToInterval={itemHeight}
-                showsVerticalScrollIndicator={false}
-                decelerationRate="fast"
-                nestedScrollEnabled={true}
-                contentContainerStyle={{ paddingVertical: padding }}
-                onMomentumScrollEnd={(e) => {
-                    const index = Math.round(e.nativeEvent.contentOffset.y / itemHeight);
-                    if (data[index] !== undefined) onValueChange(data[index]);
-                }}
-            >
-                {data.map((item, i) => (
-                    <View key={i} style={[styles.wheelItem, { height: itemHeight }]}>
-                        <Text style={[
-                            styles.wheelItemText, 
-                            selectedValue === item && styles.wheelItemTextActive
-                        ]}>
-                            {typeof item === 'number' ? item.toString().padStart(2, '0') : item}
-                        </Text>
+        <View style={{ width: itemWidth, height: containerHeight, justifyContent: 'center', alignItems: 'center' }}>
+            <View style={{ flex: 1, width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                <ScrollView
+                    ref={scrollRef}
+                    snapToInterval={itemHeight}
+                    showsVerticalScrollIndicator={false}
+                    decelerationRate="fast"
+                    nestedScrollEnabled={true}
+                    contentContainerStyle={{ paddingVertical: padding }}
+                    onMomentumScrollEnd={(e) => {
+                        const index = Math.round(e.nativeEvent.contentOffset.y / itemHeight);
+                        if (data[index] !== undefined) onValueChange(data[index]);
+                    }}
+                >
+                    {data.map((item, i) => (
+                        <View key={i} style={[styles.wheelItem, { height: itemHeight }]}>
+                            <Text style={[
+                                styles.wheelItemText, 
+                                selectedValue === item && styles.wheelItemTextActive
+                            ]}>
+                                {typeof item === 'number' ? item.toString().padStart(2, '0') : item}
+                            </Text>
+                        </View>
+                    ))}
+                </ScrollView>
+                {label && (
+                    <View style={{ height: itemHeight, justifyContent: 'center', marginLeft: 4 }}>
+                        <Text style={styles.wheelLabel}>{label}</Text>
                     </View>
-                ))}
-            </ScrollView>
-            {label && <Text style={styles.wheelLabel}>{label}</Text>}
+                )}
+            </View>
         </View>
     );
 };
@@ -572,15 +578,56 @@ const ScheduleForm = ({
                 ))}
             </View>
 
+            {/* Conditional Date/Day Selection - MOVED TO TOP */}
+            {type === 'particular' && (
+                <>
+                    <Text style={styles.sectionLabel}>Select Date</Text>
+                    <View style={[styles.darkPickerContainer, { marginTop: 0, marginBottom: 24 }]}>
+                        <View style={styles.pickerOverlay} pointerEvents="none" />
+                        <View style={styles.pickerRow}>
+                            <WheelPicker data={Array.from({length: 31}, (_, i) => i+1)} selectedValue={date.d} onValueChange={v => setDate({...date, d: v})} itemWidth={40} containerHeight={100} />
+                            <View style={styles.hugeUnitWrapper}><Text style={styles.unitLabel}>D</Text></View>
+                            <View style={styles.dateColumnGap} />
+                            <WheelPicker data={Array.from({length: 12}, (_, i) => i+1)} selectedValue={date.m} onValueChange={v => setDate({...date, m: v})} itemWidth={40} containerHeight={100} />
+                            <View style={styles.hugeUnitWrapper}><Text style={styles.unitLabel}>M</Text></View>
+                            <View style={styles.dateColumnGap} />
+                            <WheelPicker data={[25, 26, 27, 28]} selectedValue={date.y} onValueChange={v => setDate({...date, y: v})} itemWidth={40} containerHeight={100} />
+                            <View style={styles.hugeUnitWrapper}><Text style={styles.unitLabel}>Y</Text></View>
+                        </View>
+                    </View>
+                </>
+            )}
+            {type === 'weekly' && (
+                <>
+                    <Text style={styles.sectionLabel}>Select Days</Text>
+                    <View style={styles.daySelectorWrapper}>
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.daySelector}>
+                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d, i) => {
+                            const isSelected = Array.isArray(selectedDays) && selectedDays.indexOf(i) !== -1;
+                            return (
+                                <TouchableOpacity key={d} style={[styles.dayBtn, isSelected && styles.dayBtnActive]} onPress={() => onToggleDay(i)}>
+                                    <Text style={[styles.dayBtnText, isSelected && styles.dayBtnTextActive]}>{d}</Text>
+                                </TouchableOpacity>
+                            );
+                        })}
+                      </ScrollView>
+                    </View>
+                </>
+            )}
+
             {/* Start Time Section */}
             <Text style={styles.sectionLabel}>Start Time</Text>
             <View style={styles.darkPickerContainer}>
                 <View style={styles.pickerOverlay} pointerEvents="none" />
-                <WheelPicker data={hoursArr} selectedValue={hour} onValueChange={setHour} itemWidth={60} />
-                <Text style={styles.pickerSeparator}>:</Text>
-                <WheelPicker data={minsArr} selectedValue={minute} onValueChange={setMinute} itemWidth={60} />
-                <View style={styles.ampmWrapper}>
-                    <WheelPicker data={['AM', 'PM']} selectedValue={ampm} onValueChange={setAmpm} itemWidth={60} />
+                <View style={styles.pickerRow}>
+                    <WheelPicker data={hoursArr} selectedValue={hour} onValueChange={setHour} itemWidth={45} containerHeight={100} />
+                    <View style={styles.hugeSeparatorWrapper}>
+                        <Text style={styles.pickerSeparator}>:</Text>
+                    </View>
+                    <WheelPicker data={minsArr} selectedValue={minute} onValueChange={setMinute} itemWidth={45} containerHeight={100} />
+                    <View style={styles.hugeAmpmWrapper}>
+                        <WheelPicker data={['AM', 'PM']} selectedValue={ampm} onValueChange={setAmpm} itemWidth={60} containerHeight={100} />
+                    </View>
                 </View>
             </View>
 
@@ -588,34 +635,14 @@ const ScheduleForm = ({
             <Text style={styles.sectionLabel}>Run Time</Text>
             <View style={styles.darkPickerContainer}>
                 <View style={styles.pickerOverlay} pointerEvents="none" />
-                <WheelPicker data={runHArr} selectedValue={runH} onValueChange={setRunH} itemWidth={60} />
-                <Text style={styles.unitLabel}>HRS</Text>
-                <WheelPicker data={runMArr} selectedValue={runM} onValueChange={setRunM} itemWidth={60} />
-                <Text style={styles.unitLabel}>MIN</Text>
+                <View style={styles.pickerRow}>
+                    <WheelPicker data={runHArr} selectedValue={runH} onValueChange={setRunH} itemWidth={45} containerHeight={100} />
+                    <View style={styles.hugeUnitWrapper}><Text style={styles.unitLabel}>HRS</Text></View>
+                    <View style={styles.hugeColumnGap} />
+                    <WheelPicker data={runMArr} selectedValue={runM} onValueChange={setRunM} itemWidth={45} containerHeight={100} />
+                    <View style={styles.hugeUnitWrapper}><Text style={styles.unitLabel}>MIN</Text></View>
+                </View>
             </View>
-
-            {/* Particular/Weekly conditional UI */}
-            {type === 'particular' && (
-                <View style={[styles.darkPickerContainer, { marginTop: 10 }]}>
-                    <WheelPicker label="D" data={Array.from({length: 31}, (_, i) => i+1)} selectedValue={date.d} onValueChange={v => setDate({...date, d: v})} itemWidth={50} />
-                    <WheelPicker label="M" data={Array.from({length: 12}, (_, i) => i+1)} selectedValue={date.m} onValueChange={v => setDate({...date, m: v})} itemWidth={50} />
-                    <WheelPicker label="Y" data={[25, 26, 27, 28]} selectedValue={date.y} onValueChange={v => setDate({...date, y: v})} itemWidth={50} />
-                </View>
-            )}
-            {type === 'weekly' && (
-                <View style={styles.daySelector}>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d, i) => {
-                        const isSelected = Array.isArray(selectedDays) && selectedDays.indexOf(i) !== -1;
-                        return (
-                            <TouchableOpacity key={d} style={[styles.dayBtn, isSelected && styles.dayBtnActive]} onPress={() => onToggleDay(i)}>
-                                <Text style={[styles.dayBtnText, isSelected && styles.dayBtnTextActive]}>{d}</Text>
-                            </TouchableOpacity>
-                        );
-                    })}
-                  </ScrollView>
-                </View>
-            )}
 
             <TouchableOpacity style={styles.addButton} onPress={onAdd} disabled={saving}>
                 {saving ? (
@@ -746,7 +773,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
     height: 100,
     marginBottom: 20,
     position: 'relative',
@@ -754,16 +780,26 @@ const styles = StyleSheet.create({
   },
   pickerOverlay: {
     position: 'absolute',
-    top: 30, // center it
-    left: 10,
-    right: 10,
+    top: 30,
+    left: 12,
+    right: 12,
     height: 40,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 10,
   },
-  pickerSeparator: { color: '#FFFFFF', fontSize: 24, fontWeight: '700', marginHorizontal: 10 },
-  ampmWrapper: { marginLeft: 20 },
-  unitLabel: { color: '#64748B', fontSize: 14, fontWeight: '700', marginHorizontal: 8 },
+  pickerRow: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+  },
+  pickerSeparator: { color: '#FFFFFF', fontSize: 26, fontWeight: '700', marginBottom: 2 },
+  hugeSeparatorWrapper: { width: 60, height: 100, justifyContent: 'center', alignItems: 'center' },
+  hugeAmpmWrapper: { marginLeft: 40, height: 100, justifyContent: 'center' },
+  hugeColumnGap: { width: 60 },
+  dateColumnGap: { width: 30 },
+  hugeUnitWrapper: { height: 100, justifyContent: 'center', alignItems: 'center', paddingLeft: 8 },
+  unitLabel: { color: '#64748B', fontSize: 10, fontWeight: '900', marginTop: 3, letterSpacing: 0.5 },
   typeSelector: { 
     flexDirection: 'row', 
     backgroundColor: '#001021', 
@@ -777,11 +813,12 @@ const styles = StyleSheet.create({
   typeBtnTextActive: { color: '#001A33' },
   dateRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
   dateInput: { backgroundColor: '#1E293B', borderRadius: 8, width: '30%', height: 40, color: '#FFFFFF', textAlign: 'center' },
-  daySelector: { flexDirection: 'row', marginBottom: 20 },
-  dayBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#1E293B', alignItems: 'center', justifyContent: 'center', marginRight: 8 },
-  dayBtnActive: { backgroundColor: '#FFFFFF' },
+  daySelectorWrapper: { marginBottom: 30, marginTop: 10 },
+  daySelector: { paddingRight: 20 },
+  dayBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#001A33', alignItems: 'center', justifyContent: 'center', marginRight: 12, borderWidth: 1, borderColor: '#1E293B', elevation: 2 },
+  dayBtnActive: { backgroundColor: '#FFFFFF', borderColor: '#FFFFFF' },
   dayBtnText: { color: '#94A3B8', fontSize: 11, fontWeight: '700' },
-  dayBtnTextActive: { color: '#0A203F' },
+  dayBtnTextActive: { color: '#001A33' },
   addButton: { 
     backgroundColor: '#FFFFFF', 
     height: 56, 
@@ -857,10 +894,7 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   wheelWrapper: {
-    flex: 1,
-    height: '100%',
     alignItems: 'center',
-    flexDirection: 'row',
     justifyContent: 'center',
     zIndex: 2,
   },
@@ -881,8 +915,9 @@ const styles = StyleSheet.create({
   wheelLabel: {
     color: '#94A3B8',
     fontSize: 10,
-    fontWeight: '600',
-    marginTop: 4,
+    fontWeight: '900',
+    marginTop: 2,
+    letterSpacing: 0.5,
   },
   startWithTimerBtn: {
     backgroundColor: '#149644',
