@@ -7,6 +7,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Shield, Lock, User, Phone, ArrowRight } from 'lucide-react-native';
 import { useNavigate } from 'react-router-native';
 import { registerUser } from '../../services/api';
+import StatusModal from '../../components/StatusModal';
+
 
 const Register = () => {
     const navigate = useNavigate();
@@ -15,19 +17,41 @@ const Register = () => {
     const [phone, setPhone] = useState('');
     const [loading, setLoading] = useState(false);
 
+    // Status Modal State
+    const [statusModal, setStatusModal] = useState({
+        visible: false,
+        type: 'success',
+        title: '',
+        message: '',
+        onConfirm: null
+    });
+
+    const showStatus = (type, title, message, onConfirm = null) => {
+        setStatusModal({
+            visible: true,
+            type,
+            title,
+            message,
+            onConfirm: () => {
+                setStatusModal(prev => ({ ...prev, visible: false }));
+                if (onConfirm) onConfirm();
+            }
+        });
+    };
+
+
     const handleRegister = async () => {
         if (!username || !password || !phone) {
-            Alert.alert('Error', 'Please fill in all fields');
+            showStatus('error', 'Error', 'Please fill in all fields');
             return;
         }
 
         setLoading(true);
         try {
             await registerUser(username, password, phone);
-            Alert.alert('Success', 'Registration successful! Please login.');
-            navigate('/login');
+            showStatus('success', 'SUCCESS!', 'Registration successful! Please login.', () => navigate('/login'));
         } catch (error) {
-            Alert.alert('Registration Failed', error.message);
+            showStatus('error', 'Registration Failed', error.message);
         } finally {
             setLoading(false);
         }
@@ -35,6 +59,14 @@ const Register = () => {
 
     return (
         <SafeAreaView style={styles.container}>
+            <StatusModal 
+                visible={statusModal.visible}
+                type={statusModal.type}
+                title={statusModal.title}
+                message={statusModal.message}
+                onConfirm={statusModal.onConfirm}
+                onClose={() => setStatusModal(prev => ({ ...prev, visible: false }))}
+            />
             <KeyboardAvoidingView 
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={{ flex: 1 }}

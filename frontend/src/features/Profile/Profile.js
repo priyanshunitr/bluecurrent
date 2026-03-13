@@ -9,6 +9,10 @@ import { useNavigate } from 'react-router-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { changePassword, logoutUser } from '../../services/api';
 import BottomNav from '../../components/BottomNav';
+import StatusModal from '../../components/StatusModal';
+import ConfirmModal from '../../components/ConfirmModal';
+
+
 
 const Profile = () => {
     const navigate = useNavigate();
@@ -16,6 +20,36 @@ const Profile = () => {
     const [oldPassword, setOldPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [loading, setLoading] = useState(false);
+
+    // Status/Confirm Modal State
+    const [confirmModal, setConfirmModal] = useState({
+        visible: false,
+        title: '',
+        message: '',
+        onConfirm: null
+    });
+
+    const [statusModal, setStatusModal] = useState({
+        visible: false,
+        type: 'success',
+        title: '',
+        message: '',
+        onConfirm: null
+    });
+
+    const showStatus = (type, title, message, onConfirm = null) => {
+        setStatusModal({
+            visible: true,
+            type,
+            title,
+            message,
+            onConfirm: () => {
+                setStatusModal(prev => ({ ...prev, visible: false }));
+                if (onConfirm) onConfirm();
+            }
+        });
+    };
+
 
     useEffect(() => {
         const getUsername = async () => {
@@ -27,30 +61,54 @@ const Profile = () => {
 
     const handleChangePassword = async () => {
         if (!oldPassword || !newPassword) {
-            Alert.alert('Error', 'Please fill both password fields');
+            showStatus('error', 'Error', 'Please fill both password fields');
             return;
         }
 
         setLoading(true);
         try {
             await changePassword(oldPassword, newPassword);
-            Alert.alert('Success', 'Password updated successfully!');
+            showStatus('success', 'SUCCESS!', 'Password updated successfully!');
             setOldPassword('');
             setNewPassword('');
         } catch (error) {
-            Alert.alert('Update Failed', error.message);
+            showStatus('error', 'Update Failed', error.message);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleLogout = async () => {
-        await logoutUser();
-        navigate('/login');
+    const handleLogout = () => {
+        setConfirmModal({
+            visible: true,
+            title: 'Sign Out',
+            message: 'Are you sure you want to sign out of your account?',
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, visible: false }));
+                await logoutUser();
+                navigate('/login');
+            }
+        });
     };
 
     return (
         <SafeAreaView style={styles.safeArea}>
+            <ConfirmModal 
+                visible={confirmModal.visible}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                confirmText="Sign Out"
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal(prev => ({ ...prev, visible: false }))}
+            />
+            <StatusModal 
+                visible={statusModal.visible}
+                type={statusModal.type}
+                title={statusModal.title}
+                message={statusModal.message}
+                onConfirm={statusModal.onConfirm}
+                onClose={() => setStatusModal(prev => ({ ...prev, visible: false }))}
+            />
             <View style={styles.container}>
                 <View style={styles.header}>
                     <Text style={styles.headerTitle}>Account Settings</Text>

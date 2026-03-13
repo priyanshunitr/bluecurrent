@@ -11,6 +11,8 @@ import {
 import { useNavigate } from 'react-router-native';
 import { fetchMyMotors, fetchSchedules, updateSchedules } from '../services/api';
 import BottomNav from '../components/BottomNav';
+import StatusModal from '../components/StatusModal';
+
 
 const Schedule = () => {
     const navigate = useNavigate();
@@ -21,6 +23,29 @@ const Schedule = () => {
     const [schedules, setSchedules] = useState([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+
+    // Status Modal State
+    const [statusModal, setStatusModal] = useState({
+        visible: false,
+        type: 'success',
+        title: '',
+        message: '',
+        onConfirm: null
+    });
+
+    const showStatus = (type, title, message, onConfirm = null) => {
+        setStatusModal({
+            visible: true,
+            type,
+            title,
+            message,
+            onConfirm: () => {
+                setStatusModal(prev => ({ ...prev, visible: false }));
+                if (onConfirm) onConfirm();
+            }
+        });
+    };
+
 
     // Form State
     const [hour, setHour] = useState('');
@@ -64,7 +89,7 @@ const Schedule = () => {
         const m = parseInt(minute);
 
         if (isNaN(h) || isNaN(m) || h < 0 || h > 23 || m < 0 || m > 59) {
-            Alert.alert('Invalid Time', 'Please enter a valid hour (0-23) and minute (0-59)');
+            showStatus('error', 'Invalid Time', 'Please enter a valid hour (0-23) and minute (0-59)');
             return;
         }
 
@@ -87,9 +112,9 @@ const Schedule = () => {
             setSchedules(updated);
             // Clear form
             setHour(''); setMinute(''); setDuration('');
-            Alert.alert('Success', 'Schedule added!');
+            showStatus('success', 'SUCCESS!', 'Schedule added successfully!');
         } catch (error) {
-            Alert.alert('Error', error.message);
+            showStatus('error', 'Error', error.message);
         } finally {
             setSaving(false);
         }
@@ -101,7 +126,7 @@ const Schedule = () => {
             await updateSchedules(selectedMotorHex, updated);
             setSchedules(updated);
         } catch (error) {
-            Alert.alert('Error', 'Failed to delete schedule');
+            showStatus('error', 'Error', 'Failed to delete schedule');
         }
     };
 
@@ -118,6 +143,14 @@ const Schedule = () => {
 
     return (
         <SafeAreaView style={styles.safeArea}>
+            <StatusModal 
+                visible={statusModal.visible}
+                type={statusModal.type}
+                title={statusModal.title}
+                message={statusModal.message}
+                onConfirm={statusModal.onConfirm}
+                onClose={() => setStatusModal(prev => ({ ...prev, visible: false }))}
+            />
             <View style={styles.container}>
                 {/* Header */}
                 <View style={styles.header}>

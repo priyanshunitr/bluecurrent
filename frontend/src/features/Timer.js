@@ -12,6 +12,8 @@ import { useNavigate } from 'react-router-native';
 import { fetchMyMotors, toggleMotorState, fetchMotorStatus } from '../services/api';
 import BottomNav from '../components/BottomNav';
 import Svg, { Circle } from 'react-native-svg';
+import StatusModal from '../components/StatusModal';
+
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
@@ -25,6 +27,29 @@ const Timer = () => {
     const [isActive, setIsActive] = useState(false);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
+
+    // Status Modal State
+    const [statusModal, setStatusModal] = useState({
+        visible: false,
+        type: 'error',
+        title: '',
+        message: '',
+        onConfirm: null
+    });
+
+    const showStatus = (type, title, message, onConfirm = null) => {
+        setStatusModal({
+            visible: true,
+            type,
+            title,
+            message,
+            onConfirm: () => {
+                setStatusModal(prev => ({ ...prev, visible: false }));
+                if (onConfirm) onConfirm();
+            }
+        });
+    };
+
 
     // Form State
     const [hours, setHours] = useState('0');
@@ -92,7 +117,7 @@ const Timer = () => {
     const handleStart = async () => {
         const totalMinutes = (parseInt(hours) || 0) * 60 + (parseInt(minutes) || 0);
         if (totalMinutes <= 0) {
-            Alert.alert('Invalid Time', 'Please enter a duration');
+            showStatus('error', 'Invalid Time', 'Please enter a duration');
             return;
         }
 
@@ -102,7 +127,7 @@ const Timer = () => {
             setSecondsLeft(totalMinutes * 60);
             setIsActive(true);
         } catch (error) {
-            Alert.alert('Error', error.message);
+            showStatus('error', 'Error', error.message);
         } finally {
             setActionLoading(false);
         }
@@ -115,7 +140,7 @@ const Timer = () => {
             setIsActive(false);
             setSecondsLeft(0);
         } catch (error) {
-            Alert.alert('Error', error.message);
+            showStatus('error', 'Error', error.message);
         } finally {
             setActionLoading(false);
         }
@@ -140,6 +165,14 @@ const Timer = () => {
 
     return (
         <SafeAreaView style={styles.safeArea}>
+            <StatusModal 
+                visible={statusModal.visible}
+                type={statusModal.type}
+                title={statusModal.title}
+                message={statusModal.message}
+                onConfirm={statusModal.onConfirm}
+                onClose={() => setStatusModal(prev => ({ ...prev, visible: false }))}
+            />
             <View style={styles.container}>
                 {/* Header */}
                 <View style={styles.header}>

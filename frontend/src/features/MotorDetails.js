@@ -16,6 +16,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { X } from 'lucide-react-native';
+import StatusModal from '../components/StatusModal';
+import ConfirmModal from '../components/ConfirmModal';
+
 
 
 const MotorDetails = () => {
@@ -29,6 +32,38 @@ const MotorDetails = () => {
     const [renaming, setRenaming] = useState(false);
     const [showRenameModal, setShowRenameModal] = useState(false);
     const [newNickname, setNewNickname] = useState('');
+  
+    // Status Modal State
+    const [confirmModal, setConfirmModal] = useState({
+        visible: false,
+        title: '',
+        message: '',
+        onConfirm: null
+    });
+
+    const [statusModal, setStatusModal] = useState({
+        visible: false,
+        type: 'success',
+        title: '',
+        message: '',
+        buttonText: '',
+        onConfirm: null
+    });
+
+    const showStatus = (type, title, message, onConfirm = null, buttonText = '') => {
+        setStatusModal({
+            visible: true,
+            type,
+            title,
+            message,
+            buttonText,
+            onConfirm: () => {
+                setStatusModal(prev => ({ ...prev, visible: false }));
+                if (onConfirm) onConfirm();
+            }
+        });
+    };
+
   
     // Timer Modal State
     const [showTimerModal, setShowTimerModal] = useState(false);
@@ -89,7 +124,7 @@ const MotorDetails = () => {
             await toggleMotorState(hexcode, newState, finalDuration);
             await loadMotorData();
         } catch (error) {
-            Alert.alert('Control Error', error.message);
+            showStatus('error', 'Control Error', error.message);
             setMotorData(prev => ({ ...prev, current_on: !newState }));
         } finally {
             setActionLoading(false);
@@ -100,7 +135,7 @@ const MotorDetails = () => {
       let newSchedules = [];
       if (type === 'weekly') {
           if (selectedDays.length === 0) {
-              Alert.alert('Error', 'Please select at least one day');
+              showStatus('error', 'Error', 'Please select at least one day');
               return;
           }
           newSchedules = selectedDays.map((day, idx) => ({
@@ -126,10 +161,9 @@ const MotorDetails = () => {
       try {
           await updateSchedules(hexcode, updated);
           setMotorData(prev => ({ ...prev, schedules: updated }));
-          Alert.alert('Success', 'Schedule added!');
-          setShowScheduleForm(false);
+          showStatus('success', 'SUCCESS!', 'Schedule added successfully!', () => setShowScheduleForm(false));
       } catch (error) {
-          Alert.alert('Error', error.message);
+          showStatus('error', 'Error', error.message);
       } finally {
           setSaving(false);
       }
@@ -141,40 +175,33 @@ const MotorDetails = () => {
           await updateSchedules(hexcode, updated);
           setMotorData(prev => ({ ...prev, schedules: updated }));
       } catch (error) {
-          Alert.alert('Error', 'Failed to delete schedule');
+          showStatus('error', 'Error', 'Failed to delete schedule');
       }
     };
 
     const handleUnlink = () => {
-        Alert.alert(
-            'Remove Motor',
-            `Are you sure you want to remove "${motorData?.nickname || 'this motor'}"?\n\nThis will unlink it from your account.`,
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Remove',
-                    style: 'destructive',
-                    onPress: async () => {
-                        setUnlinking(true);
-                        try {
-                            await unlinkMotor(hexcode);
-                            Alert.alert('Done', 'Motor has been removed.', [
-                                { text: 'OK', onPress: () => navigate('/') },
-                            ]);
-                        } catch (error) {
-                            Alert.alert('Error', error.message);
-                        } finally {
-                            setUnlinking(false);
-                        }
-                    },
-                },
-            ]
-        );
+        setConfirmModal({
+            visible: true,
+            title: 'Remove Motor',
+            message: `Are you sure you want to remove "${motorData?.nickname || 'this motor'}"?\n\nThis will unlink it from your account permanently.`,
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, visible: false }));
+                setUnlinking(true);
+                try {
+                    await unlinkMotor(hexcode);
+                    showStatus('success', 'SUCCESS!', 'Motor has been removed.', () => navigate('/'));
+                } catch (error) {
+                    showStatus('error', 'Error', error.message);
+                } finally {
+                    setUnlinking(false);
+                }
+            }
+        });
     };
 
     const handleRename = async () => {
         if (!newNickname.trim()) {
-            Alert.alert('Error', 'Please enter a name');
+            showStatus('error', 'Error', 'Please enter a name');
             return;
         }
         setRenaming(true);
@@ -182,9 +209,9 @@ const MotorDetails = () => {
             await renameMotor(hexcode, newNickname.trim());
             setMotorData(prev => ({ ...prev, nickname: newNickname.trim() }));
             setShowRenameModal(false);
-            Alert.alert('Success', 'Motor renamed successfully');
+            showStatus('success', 'SUCCESS!', 'Motor renamed successfully');
         } catch (error) {
-            Alert.alert('Error', error.message);
+            showStatus('error', 'Error', error.message);
         } finally {
             setRenaming(false);
         }
@@ -208,6 +235,23 @@ const MotorDetails = () => {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
+          <ConfirmModal 
+            visible={confirmModal.visible}
+            title={confirmModal.title}
+            message={confirmModal.message}
+            confirmText="Remove"
+            onConfirm={confirmModal.onConfirm}
+            onCancel={() => setConfirmModal(prev => ({ ...prev, visible: false }))}
+          />
+          <StatusModal 
+            visible={statusModal.visible}
+            type={statusModal.type}
+            title={statusModal.title}
+            message={statusModal.message}
+            buttonText={statusModal.buttonText}
+            onConfirm={statusModal.onConfirm}
+            onClose={() => setStatusModal(prev => ({ ...prev, visible: false }))}
+          />
           <TimerModal 
               visible={showTimerModal} 
               selH={selH} setSelH={setSelH} 

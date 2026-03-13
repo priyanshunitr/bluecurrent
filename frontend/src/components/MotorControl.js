@@ -8,6 +8,8 @@ import {
   Platform,
 } from 'react-native';
 import { LOCAL_HOST } from '@env';
+import StatusModal from './StatusModal';
+
 
 /**
  * MotorControl
@@ -22,6 +24,29 @@ export default function MotorControl() {
   const [motorOn, setMotorOn] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(0);
   const pollRef = useRef(null);
+
+  // Status Modal State
+  const [statusModal, setStatusModal] = useState({
+      visible: false,
+      type: 'success',
+      title: '',
+      message: '',
+      onConfirm: null
+  });
+
+  const showStatus = (type, title, message, onConfirm = null) => {
+      setStatusModal({
+          visible: true,
+          type,
+          title,
+          message,
+          onConfirm: () => {
+              setStatusModal(prev => ({ ...prev, visible: false }));
+              if (onConfirm) onConfirm();
+          }
+      });
+  };
+
 
   // ── On mount: sync motor + timer state from backend ─────────────────────
   useEffect(() => {
@@ -73,7 +98,7 @@ export default function MotorControl() {
       // If timerEndsAt is null it means "no timer set" — motor is just ON indefinitely.
       if (secs === 0 && data.timerEndsAt !== null && data.timerEndsAt !== undefined) {
         setMotorOn(false);
-        Alert.alert('Motor OFF', 'Timer ended. Motor has been turned off automatically.');
+        showStatus('success', 'Motor OFF', 'Timer ended. Motor has been turned off automatically.');
       }
     } catch (e) {
       console.warn('[MotorControl] poll error:', e.message);
@@ -151,13 +176,13 @@ export default function MotorControl() {
       });
       const data = await res.json();
       if (!res.ok) {
-        Alert.alert('Error', data.message || 'Failed to turn motor ON.');
+        showStatus('error', 'Error', data.message || 'Failed to turn motor ON.');
         return;
       }
       setMotorOn(true);
       setSecondsLeft(durationSeconds);
     } catch (e) {
-      Alert.alert('Error', 'Could not reach the server.');
+      showStatus('error', 'Error', 'Could not reach the server.');
     }
   };
 
@@ -172,7 +197,7 @@ export default function MotorControl() {
       setMotorOn(false);
       setSecondsLeft(0);
     } catch (e) {
-      Alert.alert('Error', 'Could not reach the server.');
+      showStatus('error', 'Error', 'Could not reach the server.');
     }
   };
 
@@ -186,6 +211,14 @@ export default function MotorControl() {
 
   return (
     <View style={styles.container}>
+      <StatusModal 
+        visible={statusModal.visible}
+        type={statusModal.type}
+        title={statusModal.title}
+        message={statusModal.message}
+        onConfirm={statusModal.onConfirm}
+        onClose={() => setStatusModal(prev => ({ ...prev, visible: false }))}
+      />
       <Text style={styles.label}>Motor</Text>
 
       <View style={[styles.statusBadge, motorOn ? styles.statusOn : styles.statusOff]}>

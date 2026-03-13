@@ -7,12 +7,37 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Cpu, ChevronLeft, Link as LinkIcon, Edit3 } from 'lucide-react-native';
 import { useNavigate } from 'react-router-native';
 import { linkMotor, fetchMyMotors } from '../../services/api';
+import StatusModal from '../../components/StatusModal';
+
 
 const LinkMotor = () => {
     const navigate = useNavigate();
     const [hexcode, setHexcode] = useState('');
     const [nickname, setNickname] = useState('');
     const [loading, setLoading] = useState(false);
+    
+    // Status Modal State
+    const [statusModal, setStatusModal] = useState({
+        visible: false,
+        type: 'success',
+        title: '',
+        message: '',
+        onConfirm: null
+    });
+
+    const showStatus = (type, title, message, onConfirm = null) => {
+        setStatusModal({
+            visible: true,
+            type,
+            title,
+            message,
+            onConfirm: () => {
+                setStatusModal(prev => ({ ...prev, visible: false }));
+                if (onConfirm) onConfirm();
+            }
+        });
+    };
+
 
     useEffect(() => {
         const initDefaultName = async () => {
@@ -28,18 +53,16 @@ const LinkMotor = () => {
 
     const handleLink = async () => {
         if (!hexcode) {
-            Alert.alert('Error', 'Please enter a hexcode');
+            showStatus('error', 'Error', 'Please enter a hexcode');
             return;
         }
-
+    
         setLoading(true);
         try {
             await linkMotor(hexcode, nickname || undefined);
-            Alert.alert('Success', 'Motor linked successfully!', [
-                { text: 'OK', onPress: () => navigate('/') }
-            ]);
+            showStatus('success', 'SUCCESS!', 'Motor linked successfully!', () => navigate('/'));
         } catch (error) {
-            Alert.alert('Linking Failed', error.message);
+            showStatus('error', 'Linking Failed', error.message);
         } finally {
             setLoading(false);
         }
@@ -47,6 +70,14 @@ const LinkMotor = () => {
 
     return (
         <SafeAreaView style={styles.container}>
+            <StatusModal 
+                visible={statusModal.visible}
+                type={statusModal.type}
+                title={statusModal.title}
+                message={statusModal.message}
+                onConfirm={statusModal.onConfirm}
+                onClose={() => setStatusModal(prev => ({ ...prev, visible: false }))}
+            />
             <View style={styles.header}>
                 <TouchableOpacity style={styles.backButton} onPress={() => navigate(-1)}>
                     <ChevronLeft color="#0F172A" size={24} />

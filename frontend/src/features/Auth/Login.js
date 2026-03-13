@@ -7,6 +7,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Shield, Lock, User, ArrowRight } from 'lucide-react-native';
 import { useNavigate } from 'react-router-native';
 import { loginUser } from '../../services/api';
+import StatusModal from '../../components/StatusModal';
+
 
 const Login = () => {
     const navigate = useNavigate();
@@ -14,9 +16,32 @@ const Login = () => {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
 
+    // Status Modal State
+    const [statusModal, setStatusModal] = useState({
+        visible: false,
+        type: 'error',
+        title: '',
+        message: '',
+        onConfirm: null
+    });
+
+    const showStatus = (type, title, message, onConfirm = null) => {
+        setStatusModal({
+            visible: true,
+            type,
+            title,
+            message,
+            onConfirm: () => {
+                setStatusModal(prev => ({ ...prev, visible: false }));
+                if (onConfirm) onConfirm();
+            }
+        });
+    };
+
+
     const handleLogin = async () => {
         if (!username || !password) {
-            Alert.alert('Error', 'Please fill in all fields');
+            showStatus('error', 'Error', 'Please fill in all fields');
             return;
         }
 
@@ -25,7 +50,7 @@ const Login = () => {
             await loginUser(username, password);
             navigate('/');
         } catch (error) {
-            Alert.alert('Login Failed', error.message);
+            showStatus('error', 'Login Failed', error.message);
         } finally {
             setLoading(false);
         }
@@ -33,6 +58,14 @@ const Login = () => {
 
     return (
         <SafeAreaView style={styles.container}>
+            <StatusModal 
+                visible={statusModal.visible}
+                type={statusModal.type}
+                title={statusModal.title}
+                message={statusModal.message}
+                onConfirm={statusModal.onConfirm}
+                onClose={() => setStatusModal(prev => ({ ...prev, visible: false }))}
+            />
             <KeyboardAvoidingView 
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={{ flex: 1 }}
