@@ -4,7 +4,8 @@ import {
     TextInput, Alert, ScrollView 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { User, Lock, LogOut, ChevronRight, Shield } from 'lucide-react-native';
+import { User, Lock, LogOut, ChevronRight } from 'lucide-react-native';
+import { Image } from 'react-native';
 import { useNavigate } from 'react-router-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { changePassword, logoutUser } from '../../services/api';
@@ -166,8 +167,12 @@ const Profile = () => {
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>App</Text>
                         <TouchableOpacity style={styles.actionItem} onPress={() => {}}>
-                            <View style={styles.actionIconWrapper}>
-                                <Shield color="#FFFFFF" size={20} />
+                            <View style={[styles.actionIconWrapper, { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0' }]}>
+                                <Image 
+                                    source={require('../../assets/Bluecurrentlogo.png')} 
+                                    style={styles.logoSmall}
+                                    resizeMode="contain"
+                                />
                             </View>
                             <Text style={styles.actionText}>Privacy Policy</Text>
                             <ChevronRight color="#94A3B8" size={20} />
@@ -298,6 +303,10 @@ const styles = StyleSheet.create({
     },
     logoutItem: {
         marginTop: 8,
+    },
+    logoSmall: {
+        width: 24,
+        height: 24,
     },
 });
 

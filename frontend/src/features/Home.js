@@ -1,13 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Bell, Shield } from 'lucide-react-native';
+import { Bell } from 'lucide-react-native';
+import { Image } from 'react-native';
 import { useNavigate } from 'react-router-native';
 import BottomNav from '../components/BottomNav';
 import { fetchMyMotors } from '../services/api';
 import { formatMotorTime } from '../utils/dateUtils';
 import { createNotificationChannel, syncMotorNotifications, getNotificationHistory } from '../services/notificationService';
 import NotificationModal from '../components/NotificationModal';
+
+const LogoHeader = () => (
+  <View style={styles.logoContainer}>
+    <View style={styles.logoBg}>
+      <Image 
+        source={require('../assets/Bluecurrentlogo.png')} 
+        style={styles.logoImage}
+        resizeMode="contain"
+      />
+    </View>
+    <Text style={styles.brandText}>BLUECURRENT</Text>
+  </View>
+);
 
 const MotorCard = ({ name, status, time, isOnline, hexcode, onPress }) => (
   <TouchableOpacity 
@@ -70,10 +84,7 @@ const Home = () => {
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <View style={styles.logoContainer}>
-            <Shield color="#0A203F" fill="#0A203F" size={28} />
-            <Text style={styles.brandText}>BLUECURRENT</Text>
-          </View>
+          <LogoHeader />
           <TouchableOpacity 
             style={styles.bellButton} 
             onPress={() => {
@@ -150,6 +161,23 @@ const styles = StyleSheet.create({
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  logoBg: {
+    width: 36,
+    height: 36,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  logoImage: {
+    width: 24,
+    height: 24,
   },
   brandText: {
     fontSize: 16,

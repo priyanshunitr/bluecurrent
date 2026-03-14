@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { 
-    View, Text, StyleSheet, TextInput, 
+import { View, Text, StyleSheet, TextInput, Image,
     TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Alert 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Shield, Lock, User, Phone, ArrowRight } from 'lucide-react-native';
+import { Lock, User, Phone, ArrowRight } from 'lucide-react-native';
 import { useNavigate } from 'react-router-native';
 import { registerUser } from '../../services/api';
 import StatusModal from '../../components/StatusModal';
@@ -91,7 +90,11 @@ const Register = () => {
                 <ScrollView contentContainerStyle={styles.scrollContent}>
                     <View style={styles.header}>
                         <View style={styles.logoWrapper}>
-                            <Shield color="#FFFFFF" fill="#FFFFFF" size={40} />
+                            <Image 
+                                source={require('../../assets/Bluecurrentlogo.png')} 
+                                style={styles.logoImage}
+                                resizeMode="contain"
+                            />
                         </View>
                         <Text style={styles.welcomeText}>Create Account</Text>
                         <Text style={styles.subtitle}>Join BlueCurrent to manage your devices</Text>
@@ -176,13 +179,22 @@ const styles = StyleSheet.create({
         marginBottom: 48,
     },
     logoWrapper: {
-        width: 80,
-        height: 80,
-        borderRadius: 20,
-        backgroundColor: '#0A203F',
+        width: 100,
+        height: 100,
+        borderRadius: 24,
+        backgroundColor: '#FFFFFF',
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: 24,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.1,
+        shadowRadius: 15,
+        elevation: 10,
+    },
+    logoImage: {
+        width: 70,
+        height: 70,
     },
     welcomeText: {
         fontSize: 28,

@@ -11,6 +11,7 @@ import Register from './src/features/Auth/Register';
 import LinkMotor from './src/features/LinkMotor/LinkMotor';
 import Profile from './src/features/Profile/Profile';
 import { setUnauthorizedHandler } from './src/services/api';
+import SplashScreen from './src/SplashScreen';
 
 const AuthListener = () => {
   const navigate = useNavigate();
@@ -50,6 +51,11 @@ const BackButtonHandler = () => {
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
+  const [showSplash, setShowSplash] = React.useState(true);
+
+  if (showSplash) {
+    return <SplashScreen onFinish={() => setShowSplash(false)} />;
+  }
 
   return (
     <SafeAreaProvider>
