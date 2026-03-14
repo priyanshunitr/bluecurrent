@@ -16,20 +16,23 @@ const MOTORS_COLLECTION = 'motors';
  * @param {Date}   now
  * @returns {boolean}
  */
+/**
+ * Matches a schedule entry against the IST system time.
+ */
 const matchesSchedule = (schedule, now) => {
-    const currentH = now.getHours();
-    const currentM = now.getMinutes();
-    const currentDay = now.getDay();         // 0 = Sunday
-    const currentDate = now.getDate();
-    const currentMonth = now.getMonth() + 1;
-    const currentYear = now.getFullYear();
+    // Force comparison in India Standard Time (GMT+5:30)
+    const istDate = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    const currentH = istDate.getHours();
+    const currentM = istDate.getMinutes();
+    const currentDay = istDate.getDay();
+    const currentDate = istDate.getDate();
+    const currentMonth = istDate.getMonth() + 1;
+    const currentYear = istDate.getFullYear();
 
     if (schedule.hour !== currentH || schedule.minute !== currentM) return false;
 
     if (schedule.type === 'everyday') return true;
-
     if (schedule.type === 'weekly' && schedule.day === currentDay) return true;
-
     if (schedule.type === 'particular') {
         const targetYear = schedule.year < 100 ? 2000 + schedule.year : schedule.year;
         return (
@@ -38,17 +41,11 @@ const matchesSchedule = (schedule, now) => {
             targetYear === currentYear
         );
     }
-
     return false;
 };
 
 /**
- * Processes one motor document: applies timer + schedule logic and returns
- * a Firestore update object (empty if no changes needed).
- *
- * @param {Object} data - motor document data
- * @param {Date}   now
- * @returns {{ updates: Object, changed: boolean }}
+ * Processes one motor document
  */
 const processMotor = (data, now) => {
     const updates = {};
@@ -59,26 +56,31 @@ const processMotor = (data, now) => {
     let newMotorTurnOffTime = data.motorTurnOffTime;
     let updatedSchedules = [...schedules];
 
-    // 1. Check if active timer has expired
+    // 1. Check Timer Expiry
     const motorTurnOffTimeMillis = data.motorTurnOffTime && typeof data.motorTurnOffTime.toMillis === 'function'
         ? data.motorTurnOffTime.toMillis()
         : data.motorTurnOffTime;
 
     if (data.current_on === true && motorTurnOffTimeMillis && now.getTime() >= motorTurnOffTimeMillis) {
-        console.log(`[Scheduler] Timer expired for motor "${data.hexcode}". Turning OFF.`);
+        console.log(`[Scheduler] Timer expired for "${data.hexcode}". Turning OFF.`);
         newMotorState = false;
         newMotorTurnOffTime = null;
         changed = true;
     }
 
-    // 2. Check scheduled triggers
+    // 2. Check Scheduled Triggers
     for (let i = 0; i < schedules.length; i++) {
         const s = schedules[i];
         if (!matchesSchedule(s, now)) continue;
 
-        console.log(`[Scheduler] Schedule "${s.id}" triggered for motor "${data.hexcode}". Turning ON.`);
+        // PREVENTION: Don't trigger if already ON and this schedule was likely the cause 
+        // (Prevents pulsing every 30s during the same minute)
+        if (data.current_on === true && data.lastTriggeredScheduleId === s.id) continue;
+
+        console.log(`[Scheduler] Triggering "${s.id}" for "${data.hexcode}" at ${now.toISOString()}`);
         newMotorState = true;
         changed = true;
+        updates.lastTriggeredScheduleId = s.id; // Mark this ID as triggered
 
         if (s.duration && s.duration > 0) {
             newMotorTurnOffTime = admin.firestore.Timestamp.fromMillis(now.getTime() + s.duration * 60000);
@@ -86,7 +88,6 @@ const processMotor = (data, now) => {
             newMotorTurnOffTime = null;
         }
 
-        // Remove one-time 'particular' schedules after they fire
         if (s.type === 'particular') {
             updatedSchedules = updatedSchedules.filter((sch) => sch.id !== s.id);
         }
@@ -95,7 +96,6 @@ const processMotor = (data, now) => {
     if (changed) {
         updates.current_on = newMotorState;
         updates.motorTurnOffTime = newMotorTurnOffTime;
-
         if (newMotorState === true) {
             updates.starttime = admin.firestore.Timestamp.fromDate(now);
         }
@@ -109,7 +109,7 @@ const processMotor = (data, now) => {
 };
 
 /**
- * Main scheduler tick — iterates over ALL motors and applies logic.
+ * Main scheduler tick
  */
 export const runSchedulerTick = async () => {
     try {
@@ -117,6 +117,9 @@ export const runSchedulerTick = async () => {
         if (snapshot.empty) return;
 
         const now = new Date();
+        const istStr = now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
+        console.log(`[Scheduler] Tick | IST: ${istStr} | UTC: ${now.toISOString()}`);
+
         const batch = db.batch();
         let batchHasWrites = false;
 
@@ -130,19 +133,13 @@ export const runSchedulerTick = async () => {
             }
         });
 
-        if (batchHasWrites) {
-            await batch.commit();
-        }
+        if (batchHasWrites) await batch.commit();
     } catch (error) {
-        console.error('[Scheduler] Error during tick:', error.message);
+        console.error('[Scheduler] Error:', error.message);
     }
 };
 
-/**
- * Starts the background scheduler on a given interval.
- * @param {number} intervalMs - interval in milliseconds (default 30s)
- */
 export const startScheduler = (intervalMs = 30000) => {
-    console.log(`[Scheduler] Started. Interval: ${intervalMs / 1000}s`);
+    console.log(`[Scheduler] Started (IST Aware). Interval: ${intervalMs / 1000}s`);
     setInterval(runSchedulerTick, intervalMs);
 };
