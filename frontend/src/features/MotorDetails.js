@@ -17,6 +17,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { X } from 'lucide-react-native';
 import StatusModal from '../components/StatusModal';
 import ConfirmModal from '../components/ConfirmModal';
+import NotificationModal from '../components/NotificationModal';
+import { getNotificationHistory, syncMotorNotifications } from '../services/notificationService';
 
 
 
@@ -31,6 +33,8 @@ const MotorDetails = () => {
     const [renaming, setRenaming] = useState(false);
     const [showRenameModal, setShowRenameModal] = useState(false);
     const [newNickname, setNewNickname] = useState('');
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [hasNewNotifications, setHasNewNotifications] = useState(false);
   
     // Status Modal State
     const [confirmModal, setConfirmModal] = useState({
@@ -95,12 +99,21 @@ const MotorDetails = () => {
       const data = await fetchMotorStatus(hexcode);
       if (data) {
         setMotorData(data);
+        // Explicitly sync this motor's notification state
+        syncMotorNotifications([data], true);
       }
+      checkNotifications();
       setLoading(false);
     };
   
+    const checkNotifications = async () => {
+        const history = await getNotificationHistory();
+        setHasNewNotifications(history.some(n => !n.read));
+    };
+
     useEffect(() => {
       loadMotorData();
+      checkNotifications();
       const interval = setInterval(loadMotorData, 10000);
       return () => clearInterval(interval);
     }, [hexcode]);
@@ -329,6 +342,10 @@ const MotorDetails = () => {
             onConfirm={statusModal.onConfirm}
             onClose={() => setStatusModal(prev => ({ ...prev, visible: false }))}
           />
+          <NotificationModal 
+            visible={showNotifications} 
+            onClose={() => setShowNotifications(false)} 
+          />
           <TimerModal 
               visible={showTimerModal} 
               selH={selH} setSelH={setSelH} 
@@ -342,6 +359,11 @@ const MotorDetails = () => {
               onBack={() => navigate(-1)} 
               displayHex={motorData?.hexcode || '...'} 
               name={motorData?.nickname || 'Motor Details'} 
+              onNotificationPress={() => {
+                setShowNotifications(true);
+                setHasNewNotifications(false);
+              }}
+              hasNewNotifications={hasNewNotifications}
           />
   
           {loading ? (
@@ -555,7 +577,7 @@ const TimerModal = ({ visible, selH, setSelH, selM, setSelM, onStartWithTimer, o
     </Modal>
 );
 
-const MotorHeader = ({ onBack, displayHex, name }) => (
+const MotorHeader = ({ onBack, displayHex, name, onNotificationPress, hasNewNotifications }) => (
     <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
             <ChevronLeft color="#000" size={24} />
@@ -564,9 +586,9 @@ const MotorHeader = ({ onBack, displayHex, name }) => (
             <Text style={styles.headerTitle}>{name}</Text>
             <Text style={styles.headerSubtitle}>HEX {displayHex || 'Unknown'}</Text>
         </View>
-        <TouchableOpacity style={styles.bellButton}>
+        <TouchableOpacity style={styles.bellButton} onPress={onNotificationPress}>
             <Bell color="#111827" size={20} />
-            <View style={styles.notificationDot} />
+            {hasNewNotifications && <View style={styles.notificationDot} />}
         </TouchableOpacity>
     </View>
 );

@@ -1,15 +1,19 @@
 import notifee, { AndroidImportance, AndroidColor, AuthorizationStatus } from '@notifee/react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { formatMotorTime } from '../utils/dateUtils';
 
 const CHANNEL_ID = 'motor-status';
+const NOTIFICATION_HISTORY_KEY = '@notification_history';
+
+// Keep track of which motors currently have a displayed "ON" notification in this session
+// to avoid duplicate logging in the history
+const activeNotificationHexcodes = new Set();
 
 /**
  * Creates the notification channel and requests permission (Android 13+).
- * Safe to call multiple times — Notifee will not duplicate.
  */
 export const createNotificationChannel = async () => {
     try {
-        // Request runtime permission (required on Android 13+ / API 33+)
         const settings = await notifee.requestPermission();
         if (settings.authorizationStatus === AuthorizationStatus.DENIED) {
             console.warn('Notification permission denied by user');
@@ -31,23 +35,96 @@ export const createNotificationChannel = async () => {
 };
 
 /**
+ * Save a notification to the local history/cache.
+ */
+const saveToHistory = async (title, body, type = 'motor_on', hexcode) => {
+    try {
+        const historyJson = await AsyncStorage.getItem(NOTIFICATION_HISTORY_KEY);
+        let history = historyJson ? JSON.parse(historyJson) : [];
+        
+        // Find most recent entry for this specific motor
+        const lastEntry = history.find(n => n.hexcode === hexcode);
+        
+        // Avoid duplicate consecutive entries of same type (e.g. redundant ON logs)
+        if (lastEntry && lastEntry.type === type) return;
+
+        const newNotification = {
+            id: Date.now().toString(),
+            hexcode,
+            title,
+            body,
+            timestamp: new Date().toISOString(),
+            read: false,
+            type
+        };
+
+        // Add to front, keep last 50
+        history = [newNotification, ...history].slice(0, 50);
+        await AsyncStorage.setItem(NOTIFICATION_HISTORY_KEY, JSON.stringify(history));
+    } catch (error) {
+        console.error('Failed to save notification history:', error);
+    }
+};
+
+/**
+ * Fetch notification history.
+ */
+export const getNotificationHistory = async () => {
+    try {
+        const historyJson = await AsyncStorage.getItem(NOTIFICATION_HISTORY_KEY);
+        return historyJson ? JSON.parse(historyJson) : [];
+    } catch (error) {
+        console.error('Failed to fetch notification history:', error);
+        return [];
+    }
+};
+
+/**
+ * Clear notification history.
+ */
+export const clearNotificationHistory = async () => {
+    try {
+        await AsyncStorage.removeItem(NOTIFICATION_HISTORY_KEY);
+    } catch (error) {
+        console.error('Failed to clear notification history:', error);
+    }
+};
+
+/**
+ * Mark all as read.
+ */
+export const markNotificationsAsRead = async () => {
+    try {
+        const historyJson = await AsyncStorage.getItem(NOTIFICATION_HISTORY_KEY);
+        if (!historyJson) return;
+        let history = JSON.parse(historyJson);
+        history = history.map(n => ({ ...n, read: true }));
+        await AsyncStorage.setItem(NOTIFICATION_HISTORY_KEY, JSON.stringify(history));
+    } catch (error) {
+        console.error('Failed to mark notifications as read:', error);
+    }
+};
+
+/**
  * Show or update a persistent notification for a running motor.
- *
- * @param {string} hexcode   – motor identifier (used as notification id)
- * @param {string} nickname  – human-readable motor name
- * @param {object} starttime – Firestore timestamp or JS date
  */
 export const showMotorOnNotification = async (hexcode, nickname, starttime) => {
     try {
         const timeStr = formatMotorTime(starttime);
+        const title = `${nickname} - ON`;
+        const body = `The motor "${nickname}" has been running since ${timeStr}.`;
+
+        // Log to history (the function itself handles deduplication)
+        await saveToHistory(title, body, 'motor_on', hexcode);
+        activeNotificationHexcodes.add(hexcode);
 
         await notifee.displayNotification({
             id: `motor-on-${hexcode}`,
-            title: `${nickname} - ON`,
-            body: `The motor "${nickname}" has been running since ${timeStr}.`,
+            title,
+            body,
             android: {
                 channelId: CHANNEL_ID,
-                ongoing: true, // This prevents the user from swiping it away
+                ongoing: true,
                 autoCancel: false,
                 smallIcon: 'ic_launcher',
                 color: '#16A34A',
@@ -62,12 +139,35 @@ export const showMotorOnNotification = async (hexcode, nickname, starttime) => {
 
 /**
  * Cancel the notification for a motor that was turned OFF.
- *
- * @param {string} hexcode – motor identifier
  */
-export const cancelMotorOnNotification = async (hexcode) => {
+export const cancelMotorOnNotification = async (hexcode, nickname = 'Motor') => {
     try {
         await notifee.cancelNotification(`motor-on-${hexcode}`);
+        
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const title = `${nickname} - OFF`;
+        const body = `The motor "${nickname}" was turned off at ${timeStr}.`;
+
+        // Log to history (handles deduplication internally)
+        await saveToHistory(title, body, 'motor_off', hexcode);
+
+        // Show a brief push notification for the OFF event if it was previously ON
+        if (activeNotificationHexcodes.has(hexcode)) {
+            await notifee.displayNotification({
+                id: `motor-off-${hexcode}-${Date.now()}`,
+                title,
+                body,
+                android: {
+                    channelId: CHANNEL_ID,
+                    smallIcon: 'ic_launcher',
+                    color: '#EF4444',
+                    pressAction: { id: 'default' },
+                },
+            });
+
+            activeNotificationHexcodes.delete(hexcode);
+        }
     } catch (error) {
         console.warn('Failed to cancel notification:', error);
     }
@@ -75,28 +175,29 @@ export const cancelMotorOnNotification = async (hexcode) => {
 
 /**
  * Sync notifications with the current list of motors.
- * - Shows a notification for every motor that is ON.
- * - Cancels notifications for motors that are OFF or no longer exist.
- *
- * @param {Array} motors – array of motor objects from the API
+ * 
+ * @param {Array} motors – array of motor objects
+ * @param {boolean} isPartialList - if true, won't cancel notifications for hexcodes not in this list
  */
-export const syncMotorNotifications = async (motors) => {
+export const syncMotorNotifications = async (motors, isPartialList = false) => {
     try {
-        if (!motors || motors.length === 0) {
+        if (!motors || (motors.length === 0 && !isPartialList)) {
             const displayed = await notifee.getDisplayedNotifications();
             for (const n of displayed) {
                 if (n.id && n.id.startsWith('motor-on-')) {
-                    await notifee.cancelNotification(n.id);
+                    const hex = n.id.replace('motor-on-', '');
+                    await cancelMotorOnNotification(hex);
                 }
             }
             return;
         }
 
-        const onHexcodes = new Set();
+        const currentOnHexcodes = new Set();
+        const hexcodesInList = new Set(motors.map(m => m.hexcode));
 
         for (const motor of motors) {
             if (motor.current_on) {
-                onHexcodes.add(motor.hexcode);
+                currentOnHexcodes.add(motor.hexcode);
                 await showMotorOnNotification(
                     motor.hexcode,
                     motor.nickname || `Motor ${motor.hexcode}`,
@@ -105,12 +206,19 @@ export const syncMotorNotifications = async (motors) => {
             }
         }
 
+        // Handle motors that were turned off
         const displayed = await notifee.getDisplayedNotifications();
         for (const n of displayed) {
             if (n.id && n.id.startsWith('motor-on-')) {
                 const hex = n.id.replace('motor-on-', '');
-                if (!onHexcodes.has(hex)) {
-                    await notifee.cancelNotification(n.id);
+                
+                // If it's a partial list and this motor isn't in it, don't touch its notification
+                if (isPartialList && !hexcodesInList.has(hex)) continue;
+
+                if (!currentOnHexcodes.has(hex)) {
+                    // Try to find the nickname from the current motor list
+                    const m = motors.find(mt => mt.hexcode === hex);
+                    await cancelMotorOnNotification(hex, m?.nickname || 'Motor');
                 }
             }
         }

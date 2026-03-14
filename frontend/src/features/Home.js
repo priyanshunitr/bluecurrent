@@ -6,7 +6,8 @@ import { useNavigate } from 'react-router-native';
 import BottomNav from '../components/BottomNav';
 import { fetchMyMotors } from '../services/api';
 import { formatMotorTime } from '../utils/dateUtils';
-import { createNotificationChannel, syncMotorNotifications } from '../services/notificationService';
+import { createNotificationChannel, syncMotorNotifications, getNotificationHistory } from '../services/notificationService';
+import NotificationModal from '../components/NotificationModal';
 
 const MotorCard = ({ name, status, time, isOnline, hexcode, onPress }) => (
   <TouchableOpacity 
@@ -31,18 +32,27 @@ const Home = () => {
   const navigate = useNavigate();
   const [motors, setMotors] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [hasNewNotifications, setHasNewNotifications] = useState(false);
 
   const loadMotors = async () => {
     const data = await fetchMyMotors();
     setMotors(data);
     // Sync notifications with current motor states
-    syncMotorNotifications(data);
+    await syncMotorNotifications(data);
+    await checkNotifications();
+  };
+
+  const checkNotifications = async () => {
+    const history = await getNotificationHistory();
+    setHasNewNotifications(history.some(n => !n.read));
   };
 
   useEffect(() => {
     // Create Android notification channel on first mount
     createNotificationChannel();
     loadMotors();
+    checkNotifications();
   }, []);
 
   const onRefresh = async () => {
@@ -64,11 +74,22 @@ const Home = () => {
             <Shield color="#0A203F" fill="#0A203F" size={28} />
             <Text style={styles.brandText}>BLUECURRENT</Text>
           </View>
-          <TouchableOpacity style={styles.bellButton}>
+          <TouchableOpacity 
+            style={styles.bellButton} 
+            onPress={() => {
+              setShowNotifications(true);
+              setHasNewNotifications(false);
+            }}
+          >
             <Bell color="#111827" size={20} />
-            <View style={styles.notificationDot} />
+            {hasNewNotifications && <View style={styles.notificationDot} />}
           </TouchableOpacity>
         </View>
+
+        <NotificationModal 
+          visible={showNotifications} 
+          onClose={() => setShowNotifications(false)} 
+        />
 
         {/* Scrollable List */}
         <ScrollView 

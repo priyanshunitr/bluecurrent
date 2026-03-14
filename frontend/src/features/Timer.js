@@ -10,6 +10,7 @@ import {
 } from 'lucide-react-native';
 import { useNavigate } from 'react-router-native';
 import { fetchMyMotors, toggleMotorState, fetchMotorStatus } from '../services/api';
+import { syncMotorNotifications } from '../services/notificationService';
 import BottomNav from '../components/BottomNav';
 import Svg, { Circle } from 'react-native-svg';
 import StatusModal from '../components/StatusModal';
@@ -124,6 +125,10 @@ const Timer = () => {
         setActionLoading(true);
         try {
             await toggleMotorState(selectedMotorHex, true, totalMinutes);
+            // Sync notification immediately
+            const status = await fetchMotorStatus(selectedMotorHex);
+            if (status) await syncMotorNotifications([status], true);
+            
             setSecondsLeft(totalMinutes * 60);
             setIsActive(true);
         } catch (error) {
@@ -137,6 +142,10 @@ const Timer = () => {
         setActionLoading(true);
         try {
             await toggleMotorState(selectedMotorHex, false);
+            // Sync notification immediately
+            const status = await fetchMotorStatus(selectedMotorHex);
+            if (status) await syncMotorNotifications([status], true);
+
             setIsActive(false);
             setSecondsLeft(0);
         } catch (error) {
