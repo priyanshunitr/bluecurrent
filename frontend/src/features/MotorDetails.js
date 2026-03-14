@@ -583,7 +583,7 @@ const TimerModal = ({ visible, selH, setSelH, selM, setSelM, onStartWithTimer, o
                 <View style={styles.pickersContainer}>
                     <View style={styles.pickerIndicator} pointerEvents="none" />
                     <WheelPicker label="hours" data={[0,1,2,3,4,5,6,7,8,9,10,11,12]} selectedValue={selH} onValueChange={setSelH} containerHeight={120} itemWidth={100} />
-                    <WheelPicker label="min" data={Array.from({length: 60}, (_, i) => i)} selectedValue={selM} onValueChange={setSelM} containerHeight={120} itemWidth={100} />
+                    <WheelPicker label="min" data={Array.from({length: 59}, (_, i) => i + 1)} selectedValue={selM} onValueChange={setSelM} containerHeight={120} itemWidth={100} />
                 </View>
                 <TouchableOpacity style={styles.startWithTimerBtn} onPress={() => onStartWithTimer(selH * 60 + selM)}>
                     <Text style={styles.startWithTimerText}>START WITH {selH > 0 ? `${selH}h ` : ''}{selM}m TIMER</Text>
