@@ -306,15 +306,10 @@ const Schedule = () => {
                     </View>
 
                     {/* List Section */}
-                    <View style={styles.listSection}>
-                        <Text style={styles.sectionTitle}>Active Schedules</Text>
-                        {schedules.length === 0 ? (
-                            <View style={styles.emptyList}>
-                                <Clock color="#94A3B8" size={48} />
-                                <Text style={styles.emptyText}>No schedules set yet</Text>
-                            </View>
-                        ) : (
-                            schedules.map((s, idx) => (
+                    {schedules.length > 0 && (
+                        <View style={styles.listSection}>
+                            <Text style={styles.sectionTitle}>Active Schedules</Text>
+                            {schedules.map((s, idx) => (
                                 <View key={s.id || idx} style={styles.scheduleRow}>
                                     <View style={styles.scheduleIconBox}>
                                         {s.type === 'everyday' ? <Calendar color="#FFFFFF" size={18} /> : 
@@ -333,9 +328,9 @@ const Schedule = () => {
                                         <Trash2 color="#af0303ff" size={20} />
                                     </TouchableOpacity>
                                 </View>
-                            ))
-                        )}
-                    </View>
+                            ))}
+                        </View>
+                    )}
                 </ScrollView>
             </View>
             <BottomNav />

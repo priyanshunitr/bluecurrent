@@ -710,11 +710,12 @@ const ScheduleForm = ({
     );
 };
 
-const ActiveSchedulesList = ({ schedules, onDelete }) => (
-    <>
-        <Text style={styles.subSectionTitle}>Active Schedules</Text>
-        {schedules && schedules.length > 0 ? (
-            schedules.map((s, index) => (
+const ActiveSchedulesList = ({ schedules, onDelete }) => {
+    if (!schedules || schedules.length === 0) return null;
+    return (
+        <>
+            <Text style={styles.subSectionTitle}>Active Schedules</Text>
+            {schedules.map((s, index) => (
                 <View key={s.id || index} style={styles.scheduleRow}>
                     <View style={styles.scheduleIconBox}>
                         {s.type === 'everyday' ? <Calendar color="#FFFFFF" size={18} /> : s.type === 'weekly' ? <Clock color="#FFFFFF" size={18} /> : <Star color="#FFFFFF" size={18} />}
@@ -727,10 +728,10 @@ const ActiveSchedulesList = ({ schedules, onDelete }) => (
                     </View>
                     <TouchableOpacity onPress={() => onDelete(s.id)} style={styles.deleteBtn}><Trash2 color="#af0303ff" size={20} /></TouchableOpacity>
                 </View>
-            ))
-        ) : <Text style={styles.emptyText}>No schedules set yet</Text>}
-    </>
-);
+            ))}
+        </>
+    );
+};
 
 const RenameModal = ({ visible, value, onChange, onSave, onClose, loading }) => (
     <Modal visible={visible} transparent={true} animationType="fade">

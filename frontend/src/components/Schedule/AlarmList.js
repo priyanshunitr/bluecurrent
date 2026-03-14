@@ -4,10 +4,11 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export default function AlarmList({ schedules, removeSchedule }) {
+  if (schedules.length === 0) return null;
+
   return (
     <View style={styles.list}>
       <Text style={styles.listTitle}>Active Schedules</Text>
-      {schedules.length === 0 && <Text style={styles.emptyText}>No alarms set</Text>}
       {schedules.map((s) => (
         <View key={s.id} style={styles.item}>
           <View>
