@@ -55,25 +55,25 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     content: {
-        width: 200,
-        height: 200,
+        width: 250,
+        height: 250,
         alignItems: 'center',
         justifyContent: 'center',
     },
     logo: {
-        width: 90,
-        height: 90,
+        width: 80,
+        height: 80,
     },
     loaderArc: {
         position: 'absolute',
-        width: 150,
-        height: 150,
-        borderRadius: 75,
-        borderWidth: 3.5,
+        width: 160,
+        height: 160,
+        borderRadius: 80,
+        borderWidth: 4,
         borderColor: 'transparent',
         borderTopColor: '#0A203F',
         borderRightColor: '#0A203F',
-        borderBottomColor: '#0A203F', // Creating a 270-degree arc
+        borderBottomColor: '#0A203F',
     }
 });
 
