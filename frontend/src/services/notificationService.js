@@ -112,7 +112,7 @@ export const showMotorOnNotification = async (hexcode, nickname, starttime) => {
     try {
         const timeStr = formatMotorTime(starttime);
         const title = `${nickname} - ON`;
-        const body = `The motor "${nickname}" has been running since ${timeStr}.`;
+        const body = `The motor "${nickname}" was turned ON at ${timeStr}.`;
 
         // Log to history (the function itself handles deduplication)
         await saveToHistory(title, body, 'motor_on', hexcode);
