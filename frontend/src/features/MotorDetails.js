@@ -690,7 +690,7 @@ const ActiveSchedulesList = ({ schedules, onDelete }) => (
                         {s.type === 'everyday' ? <Calendar color="#FFFFFF" size={18} /> : s.type === 'weekly' ? <Clock color="#FFFFFF" size={18} /> : <Star color="#FFFFFF" size={18} />}
                     </View>
                     <View style={styles.scheduleInfo}>
-                        <Text style={styles.scheduleTimeText}>{s.hour.toString().padStart(2, '0')}:{s.minute.toString().padStart(2, '0')}</Text>
+                        <Text style={styles.scheduleTimeText}>{(s.hour % 12 || 12).toString().padStart(2, '0')}:{s.minute.toString().padStart(2, '0')} {s.hour >= 12 ? 'PM' : 'AM'}</Text>
                         <Text style={styles.scheduleTypeText}>
                             {s.type} {s.type === 'weekly' ? `(${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][s.day]})` : ''} {s.duration ? `• ${s.duration} min run` : ''}
                         </Text>

@@ -12,7 +12,7 @@ export default function AlarmList({ schedules, removeSchedule }) {
         <View key={s.id} style={styles.item}>
           <View>
             <Text style={styles.itemTime}>
-              {s.hour.toString().padStart(2, '0')}:{s.minute.toString().padStart(2, '0')}
+              {(s.hour % 12 || 12).toString().padStart(2, '0')}:{s.minute.toString().padStart(2, '0')} {s.hour >= 12 ? 'PM' : 'AM'}
             </Text>
             <Text style={styles.itemType}>
               {s.type === 'weekly' ? `Every ${DAYS[s.day]}` : 

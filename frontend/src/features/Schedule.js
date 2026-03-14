@@ -298,7 +298,7 @@ const Schedule = () => {
                                     </View>
                                     <View style={styles.scheduleInfo}>
                                         <Text style={styles.scheduleTime}>
-                                            {s.hour.toString().padStart(2, '0')}:{s.minute.toString().padStart(2, '0')}
+                                            {(s.hour % 12 || 12).toString().padStart(2, '0')}:{s.minute.toString().padStart(2, '0')} {s.hour >= 12 ? 'PM' : 'AM'}
                                         </Text>
                                         <Text style={styles.scheduleType}>
                                             {s.type} {s.duration ? `• ${s.duration} min run` : ''}
