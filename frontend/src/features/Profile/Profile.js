@@ -174,10 +174,10 @@ const Profile = () => {
                         </TouchableOpacity>
 
                         <TouchableOpacity style={[styles.actionItem, styles.logoutItem]} onPress={handleLogout}>
-                            <View style={[styles.actionIconWrapper, { backgroundColor: '#EF4444' }]}>
+                            <View style={[styles.actionIconWrapper, { backgroundColor: '#af0303ff' }]}>
                                 <LogOut color="#FFFFFF" size={20} />
                             </View>
-                            <Text style={[styles.actionText, { color: '#EF4444' }]}>Sign Out</Text>
+                            <Text style={[styles.actionText, { color: '#af0303ff' }]}>Sign Out</Text>
                         </TouchableOpacity>
                     </View>
                 </ScrollView>

@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   removeText: {
-    color: '#f43f5e',
+    color: '#af0303ff',
     fontWeight: '700',
   },
 });

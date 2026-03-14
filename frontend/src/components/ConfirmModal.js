@@ -17,7 +17,7 @@ const ConfirmModal = ({
     onCancel,
     type = 'danger' // 'danger' or 'info'
 }) => {
-    const primaryColor = type === 'danger' ? '#EF4444' : '#0A203F';
+    const primaryColor = type === 'danger' ? '#af0303ff' : '#0A203F';
     const lightBg = type === 'danger' ? '#FEE2E2' : '#F1F5F9';
 
     return (

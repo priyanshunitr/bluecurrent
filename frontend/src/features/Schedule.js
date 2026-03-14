@@ -104,6 +104,31 @@ const Schedule = () => {
             year: type === 'particular' ? parseInt(date.y) || 26 : 0, // default 26 for 2026
             duration: parseInt(duration) || 0,
         };
+        
+        // Check for conflicts
+        const hasConflict = schedules.some(es => {
+            if (es.hour !== newSchedule.hour || es.minute !== newSchedule.minute) return false;
+            
+            if (es.type === 'everyday' || newSchedule.type === 'everyday') return true;
+            if (es.type === 'weekly' && newSchedule.type === 'weekly') return es.day === newSchedule.day;
+            if (es.type === 'particular' && newSchedule.type === 'particular') {
+                return es.date === newSchedule.date && es.month === newSchedule.month && es.year === newSchedule.year;
+            }
+            if (es.type === 'weekly' && newSchedule.type === 'particular') {
+                const d = new Date(2000 + newSchedule.year, newSchedule.month - 1, newSchedule.date);
+                return es.day === d.getDay();
+            }
+            if (es.type === 'particular' && newSchedule.type === 'weekly') {
+                const d = new Date(2000 + es.year, es.month - 1, es.date);
+                return d.getDay() === newSchedule.day;
+            }
+            return false;
+        });
+
+        if (hasConflict) {
+            showStatus('error', 'Schedule Conflict', 'A schedule already exists for this time/day.');
+            return;
+        }
 
         const updated = [...schedules, newSchedule];
         setSaving(true);
@@ -305,7 +330,7 @@ const Schedule = () => {
                                         </Text>
                                     </View>
                                     <TouchableOpacity onPress={() => deleteSchedule(s.id)} style={styles.deleteBtn}>
-                                        <Trash2 color="#EF4444" size={20} />
+                                        <Trash2 color="#af0303ff" size={20} />
                                     </TouchableOpacity>
                                 </View>
                             ))

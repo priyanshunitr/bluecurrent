@@ -167,6 +167,36 @@ const MotorDetails = () => {
               duration: totalDuration || 0,
           }];
       }
+
+      // Check for duplicates
+      const existingSchedules = motorData.schedules || [];
+      const hasConflict = newSchedules.some(ns => {
+          return existingSchedules.some(es => {
+              if (es.hour !== ns.hour || es.minute !== ns.minute) return false;
+              
+              // Same time, check overlap
+              if (es.type === 'everyday' || ns.type === 'everyday') return true;
+              if (es.type === 'weekly' && ns.type === 'weekly') return es.day === ns.day;
+              if (es.type === 'particular' && ns.type === 'particular') {
+                  return es.date === ns.date && es.month === ns.month && es.year === ns.year;
+              }
+              // Cross-check weekly vs particular
+              if (es.type === 'weekly' && ns.type === 'particular') {
+                  const d = new Date(2000 + ns.year, ns.month - 1, ns.date);
+                  return es.day === d.getDay();
+              }
+              if (es.type === 'particular' && ns.type === 'weekly') {
+                  const d = new Date(2000 + es.year, es.month - 1, es.date);
+                  return d.getDay() === ns.day;
+              }
+              return false;
+          });
+      });
+
+      if (hasConflict) {
+          showStatus('error', 'Schedule Conflict', 'A schedule already exists for this time/day.');
+          return;
+      }
       const updated = [...(motorData.schedules || []), ...newSchedules];
       setSaving(true);
       try {
@@ -523,7 +553,7 @@ const MotorStatusCard = ({ name = "Motor 1", isOn, starttime, nextOffText, onTog
         </View>
         {nextOffText ? <Text style={styles.scheduledText}>{nextOffText}</Text> : null}
         {gasValue > 3000 && (
-            <Text style={[styles.scheduledText, { color: '#EF4444', marginTop: nextOffText ? 12 : 20 }]}>
+            <Text style={[styles.scheduledText, { color: '#af0303ff', marginTop: nextOffText ? 12 : 20 }]}>
                 Motor can't be turned ON as the gas value is above 3000
             </Text>
         )}
@@ -539,7 +569,7 @@ const GasGaugeCard = ({ gas_level }) => (
                 <Text style={styles.gasValue}>{gas_level ?? 'N/A'}</Text>
             </View>
         </View>
-        <Text style={[styles.gasFooterText, gas_level > 3000 && { color: '#EF4444' }]}>
+        <Text style={[styles.gasFooterText, gas_level > 3000 && { color: '#af0303ff' }]}>
             {gas_level > 3000 ? "Gas is above the safe limit of 3000" : "Gas is in the safe limit that is 3000"}
         </Text>
     </View>
@@ -695,7 +725,7 @@ const ActiveSchedulesList = ({ schedules, onDelete }) => (
                             {s.type} {s.type === 'weekly' ? `(${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][s.day]})` : ''} {s.duration ? `• ${s.duration} min run` : ''}
                         </Text>
                     </View>
-                    <TouchableOpacity onPress={() => onDelete(s.id)} style={styles.deleteBtn}><Trash2 color="#EF4444" size={20} /></TouchableOpacity>
+                    <TouchableOpacity onPress={() => onDelete(s.id)} style={styles.deleteBtn}><Trash2 color="#af0303ff" size={20} /></TouchableOpacity>
                 </View>
             ))
         ) : <Text style={styles.emptyText}>No schedules set yet</Text>}
@@ -751,7 +781,7 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 18, fontWeight: '700', color: '#0F172A' },
   headerSubtitle: { fontSize: 12, color: '#6B7280', marginTop: 2 },
   bellButton: { backgroundColor: '#F8FAFC', padding: 10, borderRadius: 12, position: 'relative' },
-  notificationDot: { position: 'absolute', top: 10, right: 12, width: 6, height: 6, borderRadius: 3, backgroundColor: '#EF4444' },
+  notificationDot: { position: 'absolute', top: 10, right: 12, width: 6, height: 6, borderRadius: 3, backgroundColor: '#af0303ff' },
   scrollContent: { flex: 1 },
   cardContainer: { borderRadius: 12, padding: 24, marginBottom: 16 },
   cardContentRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
@@ -1031,7 +1061,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   actionBtnRemove: {
-    backgroundColor: '#DC2626',
+    backgroundColor: '#af0303ff',
     flex: 1,
     height: 56,
     borderRadius: 12,

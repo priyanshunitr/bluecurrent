@@ -17,7 +17,7 @@ const StatusModal = ({
     onClose 
 }) => {
     const isSuccess = type === 'success';
-    const mainColor = isSuccess ? '#006e28ff' : '#bc0000ff';
+    const mainColor = isSuccess ? '#006e28ff' : '#af0303ff';
     const bgColor = isSuccess ? '#DCFCE7' : '#FEE2E2';
 
     return (
