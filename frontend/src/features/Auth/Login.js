@@ -170,10 +170,12 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: '#0F172A',
         marginBottom: 8,
+        fontFamily: 'Aeros',
     },
     subtitle: {
         fontSize: 16,
         color: '#64748B',
+        fontFamily: 'Aeros',
     },
     form: {
         width: '100%',
@@ -196,6 +198,7 @@ const styles = StyleSheet.create({
         height: 56,
         color: '#0F172A',
         fontSize: 16,
+        fontFamily: 'Aeros',
     },
     loginButton: {
         backgroundColor: '#0A203F',
@@ -214,6 +217,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
         marginRight: 8,
+        fontFamily: 'Aeros',
     },
     registerLink: {
         marginTop: 24,
@@ -222,10 +226,12 @@ const styles = StyleSheet.create({
     registerLinkText: {
         color: '#64748B',
         fontSize: 14,
+        fontFamily: 'Aeros',
     },
     registerHighlight: {
         color: '#0A203F',
         fontWeight: '600',
+        fontFamily: 'Aeros',
     },
 });
 

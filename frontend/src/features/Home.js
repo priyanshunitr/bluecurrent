@@ -12,13 +12,11 @@ import NotificationModal from '../components/NotificationModal';
 
 const LogoHeader = () => (
   <View style={styles.logoContainer}>
-    <View style={styles.logoBg}>
-      <Image 
-        source={require('../assets/Bluecurrentlogo.png')} 
-        style={styles.logoImage}
-        resizeMode="contain"
-      />
-    </View>
+    <Image 
+      source={require('../assets/Bluecurrentlogo.png')} 
+      style={styles.logoImageInner}
+      resizeMode="contain"
+    />
     <Text style={styles.brandText}>BLUECURRENT</Text>
   </View>
 );
@@ -175,6 +173,10 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  logoImageInner: {
+    width: 28,
+    height: 28,
+  },
   logoImage: {
     width: 24,
     height: 24,
@@ -185,6 +187,7 @@ const styles = StyleSheet.create({
     color: '#0A203F',
     marginLeft: 10,
     letterSpacing: 1,
+    fontFamily: 'Aeros',
   },
   bellButton: {
     backgroundColor: '#F8FAFC',
@@ -215,11 +218,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     marginBottom: 4,
+    fontFamily: 'Aeros',
   },
   hexText: {
     color: '#A1A1A1',
     fontSize: 14,
     marginBottom: 16,
+    fontFamily: 'Aeros',
   },
   statusRow: {
     flexDirection: 'row',
@@ -234,6 +239,7 @@ const styles = StyleSheet.create({
   statusText: {
     color: '#FFFFFF',
     fontSize: 14,
+    fontFamily: 'Aeros',
   },
   footerContainer: {
     paddingVertical: 20,
@@ -249,6 +255,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+    fontFamily: 'Aeros',
   },
   emptyState: {
     padding: 40,
@@ -257,6 +264,7 @@ const styles = StyleSheet.create({
   emptyText: {
     color: '#9CA3AF',
     fontSize: 14,
+    fontFamily: 'Aeros',
   }
 });
 

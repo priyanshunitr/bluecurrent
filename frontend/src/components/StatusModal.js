@@ -96,6 +96,7 @@ const styles = StyleSheet.create({
         color: '#1E293B',
         marginBottom: 12,
         textAlign: 'center',
+        fontFamily: 'Aeros',
     },
     message: {
         fontSize: 14,
@@ -104,6 +105,7 @@ const styles = StyleSheet.create({
         lineHeight: 20,
         marginBottom: 24,
         paddingHorizontal: 10,
+        fontFamily: 'Aeros',
     },
     button: {
         width: '100%',
@@ -116,6 +118,7 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         fontSize: 15,
         fontWeight: '600',
+        fontFamily: 'Aeros',
     },
 });
 

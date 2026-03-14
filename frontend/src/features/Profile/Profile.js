@@ -167,7 +167,7 @@ const Profile = () => {
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>App</Text>
                         <TouchableOpacity style={styles.actionItem} onPress={() => {}}>
-                            <View style={[styles.actionIconWrapper, { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0' }]}>
+                            <View style={styles.actionIconWrapper}>
                                 <Image 
                                     source={require('../../assets/Bluecurrentlogo.png')} 
                                     style={styles.logoSmall}
@@ -210,6 +210,7 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: '700',
         color: '#0F172A',
+        fontFamily: 'Aeros',
     },
     content: {
         flex: 1,
@@ -233,10 +234,12 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: '#0F172A',
         marginBottom: 4,
+        fontFamily: 'Aeros',
     },
     emailText: {
         fontSize: 14,
         color: '#64748B',
+        fontFamily: 'Aeros',
     },
     section: {
         marginBottom: 32,
@@ -246,6 +249,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#64748B',
         marginBottom: 16,
+        fontFamily: 'Aeros',
     },
     card: {
         backgroundColor: '#F8FAFC',
@@ -266,6 +270,7 @@ const styles = StyleSheet.create({
         marginLeft: 12,
         fontSize: 16,
         color: '#0F172A',
+        fontFamily: 'Aeros',
     },
     updateButton: {
         backgroundColor: '#0A203F',
@@ -279,6 +284,7 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         fontSize: 14,
         fontWeight: '600',
+        fontFamily: 'Aeros',
     },
     actionItem: {
         flexDirection: 'row',
@@ -300,6 +306,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
         color: '#0F172A',
+        fontFamily: 'Aeros',
     },
     logoutItem: {
         marginTop: 8,

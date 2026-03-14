@@ -165,6 +165,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: '#0F172A',
         marginLeft: 12,
+        fontFamily: 'Aeros',
     },
     content: {
         flex: 1,
@@ -196,6 +197,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: '#0F172A',
         marginBottom: 12,
+        fontFamily: 'Aeros',
     },
     cardSubtitle: {
         fontSize: 14,
@@ -203,6 +205,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         lineHeight: 20,
         marginBottom: 24,
+        fontFamily: 'Aeros',
     },
     inputLabelContainer: {
         flexDirection: 'row',
@@ -217,6 +220,7 @@ const styles = StyleSheet.create({
         color: '#64748B',
         marginLeft: 6,
         letterSpacing: 0.5,
+        fontFamily: 'Aeros',
     },
     inputWrapper: {
         width: '100%',
@@ -234,6 +238,7 @@ const styles = StyleSheet.create({
         color: '#0F172A',
         textAlign: 'center',
         letterSpacing: 2,
+        fontFamily: 'Aeros',
     },
     linkButton: {
         width: '100%',
@@ -251,6 +256,7 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         fontSize: 16,
         fontWeight: '600',
+        fontFamily: 'Aeros',
     },
 });
 

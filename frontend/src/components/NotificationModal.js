@@ -132,6 +132,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: '#0F172A',
         marginLeft: 10,
+        fontFamily: 'Aeros',
     },
     closeBtn: {
         padding: 4,
@@ -154,6 +155,7 @@ const styles = StyleSheet.create({
         marginTop: 12,
         color: '#94A3B8',
         fontSize: 16,
+        fontFamily: 'Aeros',
     },
     notificationItem: {
         flexDirection: 'row',
@@ -180,12 +182,14 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#1E293B',
         marginBottom: 4,
+        fontFamily: 'Aeros',
     },
     notifBody: {
         fontSize: 14,
         color: '#64748B',
         lineHeight: 20,
         marginBottom: 8,
+        fontFamily: 'Aeros',
     },
     timeRow: {
         flexDirection: 'row',
@@ -195,6 +199,7 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#94A3B8',
         marginLeft: 4,
+        fontFamily: 'Aeros',
     },
     clearButton: {
         flexDirection: 'row',
@@ -211,6 +216,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
         marginLeft: 8,
+        fontFamily: 'Aeros',
     },
 });
 

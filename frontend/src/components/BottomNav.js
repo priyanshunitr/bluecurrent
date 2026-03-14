@@ -42,10 +42,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
     color: '#8E8E93',
+    fontFamily: 'Aeros',
   },
   activeText: {
     color: '#0A203F',
     fontWeight: '600',
+    fontFamily: 'Aeros',
   },
 });
 
