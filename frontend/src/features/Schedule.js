@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-native';
 import { fetchMyMotors, fetchSchedules, updateSchedules } from '../services/api';
 import BottomNav from '../components/BottomNav';
 import StatusModal from '../components/StatusModal';
+import ConfirmModal from '../components/ConfirmModal';
 
 
 const Schedule = () => {
@@ -24,6 +25,16 @@ const Schedule = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
+    // Confirm Modal State
+    const [confirmModal, setConfirmModal] = useState({
+        visible: false,
+        title: '',
+        message: '',
+        confirmText: 'Confirm',
+        type: 'danger',
+        onConfirm: null
+    });
+
     // Status Modal State
     const [statusModal, setStatusModal] = useState({
         visible: false,
@@ -32,6 +43,7 @@ const Schedule = () => {
         message: '',
         onConfirm: null
     });
+
 
     const showStatus = (type, title, message, onConfirm = null) => {
         setStatusModal({
@@ -145,14 +157,24 @@ const Schedule = () => {
         }
     };
 
-    const deleteSchedule = async (id) => {
-        const updated = schedules.filter(s => s.id !== id);
-        try {
-            await updateSchedules(selectedMotorHex, updated);
-            setSchedules(updated);
-        } catch (error) {
-            showStatus('error', 'Error', 'Failed to delete schedule');
-        }
+    const deleteSchedule = (id) => {
+        setConfirmModal({
+            visible: true,
+            title: 'Delete Schedule',
+            message: 'Are you sure you want to remove this schedule?',
+            confirmText: 'Delete',
+            type: 'danger',
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, visible: false }));
+                const updated = schedules.filter(s => s.id !== id);
+                try {
+                    await updateSchedules(selectedMotorHex, updated);
+                    setSchedules(updated);
+                } catch (error) {
+                    showStatus('error', 'Error', 'Failed to delete schedule');
+                }
+            }
+        });
     };
 
     if (loading) {
@@ -175,6 +197,15 @@ const Schedule = () => {
                 message={statusModal.message}
                 onConfirm={statusModal.onConfirm}
                 onClose={() => setStatusModal(prev => ({ ...prev, visible: false }))}
+            />
+            <ConfirmModal 
+                visible={confirmModal.visible}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                confirmText={confirmModal.confirmText}
+                type={confirmModal.type}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal(prev => ({ ...prev, visible: false }))}
             />
             <View style={styles.container}>
                 {/* Header */}

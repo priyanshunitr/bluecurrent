@@ -233,14 +233,24 @@ const MotorDetails = () => {
       }
     };
   
-    const deleteSchedule = async (id) => {
-      const updated = motorData.schedules.filter(s => s.id !== id);
-      try {
-          await updateSchedules(hexcode, updated);
-          setMotorData(prev => ({ ...prev, schedules: updated }));
-      } catch (error) {
-          showStatus('error', 'Error', 'Failed to delete schedule');
-      }
+    const deleteSchedule = (id) => {
+      setConfirmModal({
+          visible: true,
+          title: 'Delete Schedule',
+          message: 'Are you sure you want to remove this schedule?',
+          confirmText: 'Delete',
+          type: 'danger',
+          onConfirm: async () => {
+              setConfirmModal(prev => ({ ...prev, visible: false }));
+              const updated = motorData.schedules.filter(s => s.id !== id);
+              try {
+                  await updateSchedules(hexcode, updated);
+                  setMotorData(prev => ({ ...prev, schedules: updated }));
+              } catch (error) {
+                  showStatus('error', 'Error', 'Failed to delete schedule');
+              }
+          }
+      });
     };
 
     const handleUnlink = () => {
