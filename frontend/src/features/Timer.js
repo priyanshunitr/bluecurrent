@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 20,
     },
-    headerTitle: { fontSize: 20, fontWeight: '700', color: '#0F172A', fontFamily: 'Aeros' },
+    headerTitle: { fontSize: 20, fontWeight: '700', color: '#0F172A' },
     backButton: { padding: 8, backgroundColor: '#F1F5F9', borderRadius: 12 },
     scrollContent: { alignItems: 'center', paddingBottom: 40 },
     motorDisplay: {
@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
         marginTop: 10,
         marginBottom: 40,
     },
-    motorText: { marginLeft: 10, color: '#64748B', fontWeight: '600', fontSize: 13, fontFamily: 'Aeros' },
+    motorText: { marginLeft: 10, color: '#64748B', fontWeight: '600', fontSize: 13 },
     timerCircleWrapper: {
         position: 'relative',
         alignItems: 'center',
@@ -332,7 +332,6 @@ const styles = StyleSheet.create({
         fontWeight: '800',
         color: '#0A203F',
         letterSpacing: 1,
-        fontFamily: 'Aeros',
     },
     timerSubtext: {
         fontSize: 12,
@@ -340,7 +339,6 @@ const styles = StyleSheet.create({
         color: '#94A3B8',
         marginTop: 4,
         letterSpacing: 2,
-        fontFamily: 'Aeros',
     },
     inputContainer: {
         width: '100%',
@@ -363,7 +361,6 @@ const styles = StyleSheet.create({
         color: '#94A3B8',
         marginBottom: 8,
         letterSpacing: 1,
-        fontFamily: 'Aeros',
     },
     timeInput: {
         backgroundColor: '#F1F5F9',
@@ -374,7 +371,6 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: '#0F172A',
         textAlign: 'center',
-        fontFamily: 'Aeros',
     },
     separator: {
         fontSize: 32,
@@ -382,7 +378,6 @@ const styles = StyleSheet.create({
         color: '#CBD5E1',
         marginHorizontal: 16,
         paddingTop: 18,
-        fontFamily: 'Aeros',
     },
     startBtn: {
         backgroundColor: '#10B981',
@@ -398,7 +393,7 @@ const styles = StyleSheet.create({
         shadowRadius: 15,
         elevation: 8,
     },
-    startBtnText: { color: '#FFFFFF', fontSize: 18, fontWeight: '700', marginLeft: 12, fontFamily: 'Aeros' },
+    startBtnText: { color: '#FFFFFF', fontSize: 18, fontWeight: '700', marginLeft: 12 },
     activeControls: {
         width: '100%',
         paddingHorizontal: 32,
@@ -413,14 +408,13 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    stopBtnText: { color: '#FFFFFF', fontSize: 18, fontWeight: '700', marginLeft: 12, fontFamily: 'Aeros' },
+    stopBtnText: { color: '#FFFFFF', fontSize: 18, fontWeight: '700', marginLeft: 12 },
     infoText: {
         marginTop: 24,
         color: '#94A3B8',
         fontSize: 12,
         textAlign: 'center',
         lineHeight: 18,
-        fontFamily: 'Aeros',
     }
 });
 

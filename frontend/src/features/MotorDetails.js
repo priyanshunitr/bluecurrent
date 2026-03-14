@@ -999,7 +999,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
     marginBottom: 30,
-    fontFamily: 'Aeros',
   },
   pickersContainer: {
     flexDirection: 'row',
@@ -1034,13 +1033,11 @@ const styles = StyleSheet.create({
     color: '#64748B',
     fontSize: 20,
     fontWeight: '500',
-    fontFamily: 'Aeros',
   },
   wheelItemTextActive: {
     color: '#FFFFFF',
     fontSize: 24,
     fontWeight: '700',
-    fontFamily: 'Aeros',
   },
   wheelLabel: {
     color: '#94A3B8',
@@ -1048,7 +1045,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginTop: 2,
     letterSpacing: 0.5,
-    fontFamily: 'Aeros',
   },
   startWithTimerBtn: {
     backgroundColor: '#149644',
@@ -1063,7 +1059,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
-    fontFamily: 'Aeros',
   },
   startWithoutTimerBtn: {
     width: '100%',
@@ -1078,7 +1073,6 @@ const styles = StyleSheet.create({
     color: '#149644',
     fontSize: 14,
     fontWeight: '600',
-    fontFamily: 'Aeros',
   },
   closeModalBtn: {
       position: 'absolute',
@@ -1105,8 +1099,7 @@ const styles = StyleSheet.create({
       fontWeight: '600',
       flex: 1,
       marginLeft: 12,
-      fontFamily: 'Aeros',
-  },
+    },
   expandBtnTextActive: {
       color: '#0A203F',
   },
@@ -1139,7 +1132,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
-    fontFamily: 'Aeros',
   },
   // Rename Modal Styles
   modalOverlayCentered: {
@@ -1161,7 +1153,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#0F172A',
     marginBottom: 20,
-    fontFamily: 'Aeros',
   },
   renameInput: {
     width: '100%',
@@ -1174,7 +1165,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E8F0',
     marginBottom: 24,
-    fontFamily: 'Aeros',
   },
   renameActions: {
     flexDirection: 'row',
@@ -1191,7 +1181,6 @@ const styles = StyleSheet.create({
     color: '#64748B',
     fontSize: 15,
     fontWeight: '600',
-    fontFamily: 'Aeros',
   },
   saveBtn: {
     backgroundColor: '#0A203F',
@@ -1205,7 +1194,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '700',
-    fontFamily: 'Aeros',
   }
 });
 

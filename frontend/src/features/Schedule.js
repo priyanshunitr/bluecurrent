@@ -368,12 +368,11 @@ const Schedule = () => {
         </SafeAreaView>
     );
 };
-
 const styles = StyleSheet.create({
     safeArea: { flex: 1, backgroundColor: '#FFFFFF' },
     container: { flex: 1 },
     loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    loadingText: { marginTop: 12, color: '#64748B', fontSize: 16, fontFamily: 'Aeros' },
+    loadingText: { marginTop: 12, color: '#64748B', fontSize: 16 },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -381,11 +380,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 20,
     },
-    headerTitle: { fontSize: 20, fontWeight: '700', color: '#0F172A', fontFamily: 'Aeros' },
+    headerTitle: { fontSize: 20, fontWeight: '700', color: '#0F172A' },
     backButton: { padding: 8, backgroundColor: '#F1F5F9', borderRadius: 12 },
     scrollContent: { paddingHorizontal: 20, paddingBottom: 40 },
     section: { marginBottom: 24 },
-    sectionTitle: { fontSize: 16, fontWeight: '600', color: '#64748B', marginBottom: 16, fontFamily: 'Aeros' },
+    sectionTitle: { fontSize: 16, fontWeight: '600', color: '#64748B', marginBottom: 16 },
     motorSelector: { flexDirection: 'row' },
     motorTab: {
         flexDirection: 'row',
@@ -397,7 +396,7 @@ const styles = StyleSheet.create({
         marginRight: 10,
     },
     motorTabActive: { backgroundColor: '#0A203F' },
-    motorTabText: { marginLeft: 8, fontSize: 14, color: '#64748B', fontWeight: '500', fontFamily: 'Aeros' },
+    motorTabText: { marginLeft: 8, fontSize: 14, color: '#64748B', fontWeight: '500' },
     motorTabTextActive: { color: '#FFFFFF' },
     formCard: {
         backgroundColor: '#0A203F',
@@ -406,10 +405,10 @@ const styles = StyleSheet.create({
         marginBottom: 32,
     },
     formHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-    formTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '600', marginLeft: 10, fontFamily: 'Aeros' },
+    formTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '600', marginLeft: 10 },
     timeRow: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 24 },
     inputGroup: { flex: 1 },
-    inputLabel: { color: '#94A3B8', fontSize: 12, marginBottom: 8, fontWeight: '500', fontFamily: 'Aeros' },
+    inputLabel: { color: '#94A3B8', fontSize: 12, marginBottom: 8, fontWeight: '500' },
     timeInput: {
         backgroundColor: '#1E293B',
         borderRadius: 12,
@@ -418,9 +417,8 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: '700',
         textAlign: 'center',
-        fontFamily: 'Aeros',
     },
-    timeSeparator: { color: '#94A3B8', fontSize: 32, marginHorizontal: 8, paddingBottom: 5, fontFamily: 'Aeros' },
+    timeSeparator: { color: '#94A3B8', fontSize: 32, marginHorizontal: 8, paddingBottom: 5 },
     durationInput: {
         backgroundColor: '#1E293B',
         borderRadius: 12,
@@ -428,7 +426,6 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         fontSize: 16,
         textAlign: 'center',
-        fontFamily: 'Aeros',
     },
     typeSelector: {
         flexDirection: 'row',
@@ -439,27 +436,27 @@ const styles = StyleSheet.create({
     },
     typeBtn: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 10 },
     typeBtnActive: { backgroundColor: '#FFFFFF' },
-    typeBtnText: { color: '#94A3B8', fontSize: 13, fontWeight: '600', fontFamily: 'Aeros' },
+    typeBtnText: { color: '#94A3B8', fontSize: 13, fontWeight: '600' },
     typeBtnTextActive: { color: '#0A203F' },
     dateRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
-    dateInput: { backgroundColor: '#1E293B', borderRadius: 8, width: '30%', height: 45, color: '#FFFFFF', textAlign: 'center', fontFamily: 'Aeros' },
+    dateInput: { backgroundColor: '#1E293B', borderRadius: 8, width: '30%', height: 45, color: '#FFFFFF', textAlign: 'center' },
     daySelector: { flexDirection: 'row', marginBottom: 20 },
     dayBtn: { width: 45, height: 45, borderRadius: 22, backgroundColor: '#1E293B', alignItems: 'center', justifyContent: 'center', marginRight: 10 },
     dayBtnActive: { backgroundColor: '#FFFFFF' },
-    dayBtnText: { color: '#94A3B8', fontSize: 12, fontWeight: '700', fontFamily: 'Aeros' },
+    dayBtnText: { color: '#94A3B8', fontSize: 12, fontWeight: '700' },
     dayBtnTextActive: { color: '#0A203F' },
     addButton: {
-        backgroundColor: '#10B981', // Emerald green 
+        backgroundColor: '#10B981', 
         height: 56,
         borderRadius: 16,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
     },
-    addButtonText: { color: '#0A203F', fontSize: 16, fontWeight: '700', marginLeft: 8, fontFamily: 'Aeros' },
+    addButtonText: { color: '#0A203F', fontSize: 16, fontWeight: '700', marginLeft: 8 },
     listSection: {},
     emptyList: { alignItems: 'center', paddingVertical: 40 },
-    emptyText: { color: '#94A3B8', marginTop: 12, fontSize: 14, fontFamily: 'Aeros' },
+    emptyText: { color: '#94A3B8', marginTop: 12, fontSize: 14 },
     scheduleRow: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -479,8 +476,8 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     scheduleInfo: { flex: 1, marginLeft: 16 },
-    scheduleTime: { fontSize: 18, fontWeight: '700', color: '#0F172A', fontFamily: 'Aeros' },
-    scheduleType: { fontSize: 12, color: '#64748B', textTransform: 'capitalize', marginTop: 2, fontFamily: 'Aeros' },
+    scheduleTime: { fontSize: 18, fontWeight: '700', color: '#0F172A' },
+    scheduleType: { fontSize: 12, color: '#64748B', textTransform: 'capitalize', marginTop: 2 },
     deleteBtn: { padding: 8 }
 });
 
