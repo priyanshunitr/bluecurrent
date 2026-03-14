@@ -106,6 +106,12 @@ const MotorDetails = () => {
     const handleToggle = async (forcedDuration = -1) => {
         if (!motorData || actionLoading) return;
         const newState = !motorData.current_on;
+        
+        if (newState === true && motorData.gas_level > 3000) {
+            showStatus('error', 'Alert', "Motor can't be turned ON as the gas value is above 3000");
+            return;
+        }
+
         const normalizedDuration = typeof forcedDuration === 'number' ? forcedDuration : -1;
         if (newState === true && normalizedDuration === -1) {
             setShowTimerModal(true);
@@ -292,6 +298,7 @@ const MotorDetails = () => {
                     nextOffText={getNextOffText()} 
                     onToggle={() => handleToggle()} 
                     loading={actionLoading} 
+                    gasValue={motorData.gas_level}
                 />
   
                 <GasGaugeCard gas_level={motorData.gas_level} />
@@ -448,7 +455,7 @@ const WheelPicker = ({ data, selectedValue, onValueChange, label, containerHeigh
                     ))}
                 </ScrollView>
                 {label && (
-                    <View style={{ height: itemHeight, justifyContent: 'center', marginLeft: 4 }}>
+                    <View style={{ height: itemHeight, justifyContent: 'center', marginLeft: 12 }}>
                         <Text style={styles.wheelLabel}>{label}</Text>
                     </View>
                 )}
@@ -465,8 +472,8 @@ const TimerModal = ({ visible, selH, setSelH, selM, setSelM, onStartWithTimer, o
                 <Text style={styles.modalTitle}>Set a Timer to turn OFF automatically</Text>
                 <View style={styles.pickersContainer}>
                     <View style={styles.pickerIndicator} pointerEvents="none" />
-                    <WheelPicker label="hours" data={[0,1,2,3,4,5,6,7,8,9,10,11,12]} selectedValue={selH} onValueChange={setSelH} containerHeight={120} />
-                    <WheelPicker label="min" data={[0,5,10,15,20,25,30,35,40,45,50,55]} selectedValue={selM} onValueChange={setSelM} containerHeight={120} />
+                    <WheelPicker label="hours" data={[0,1,2,3,4,5,6,7,8,9,10,11,12]} selectedValue={selH} onValueChange={setSelH} containerHeight={120} itemWidth={100} />
+                    <WheelPicker label="min" data={Array.from({length: 60}, (_, i) => i)} selectedValue={selM} onValueChange={setSelM} containerHeight={120} itemWidth={100} />
                 </View>
                 <TouchableOpacity style={styles.startWithTimerBtn} onPress={() => onStartWithTimer(selH * 60 + selM)}>
                     <Text style={styles.startWithTimerText}>START WITH {selH > 0 ? `${selH}h ` : ''}{selM}m TIMER</Text>
@@ -498,7 +505,7 @@ const MotorHeader = ({ onBack, displayHex, name }) => (
     </View>
 );
 
-const MotorStatusCard = ({ name = "Motor 1", isOn, starttime, nextOffText, onToggle, loading }) => (
+const MotorStatusCard = ({ name = "Motor 1", isOn, starttime, nextOffText, onToggle, loading, gasValue }) => (
     <View style={[styles.cardContainer, { backgroundColor: isOn ? '#003B00' : '#3C3C3C' }]}>
         <View style={styles.cardContentRow}>
             <View style={styles.cardLeftColumn}>
@@ -515,6 +522,11 @@ const MotorStatusCard = ({ name = "Motor 1", isOn, starttime, nextOffText, onTog
             </View>
         </View>
         {nextOffText ? <Text style={styles.scheduledText}>{nextOffText}</Text> : null}
+        {gasValue > 3000 && (
+            <Text style={[styles.scheduledText, { color: '#EF4444', marginTop: nextOffText ? 12 : 20 }]}>
+                Motor can't be turned ON as the gas value is above 3000
+            </Text>
+        )}
     </View>
 );
 
@@ -527,7 +539,9 @@ const GasGaugeCard = ({ gas_level }) => (
                 <Text style={styles.gasValue}>{gas_level ?? 'N/A'}</Text>
             </View>
         </View>
-        <Text style={styles.gasFooterText}>Gas is in the safe limit that is 3000</Text>
+        <Text style={[styles.gasFooterText, gas_level > 3000 && { color: '#EF4444' }]}>
+            {gas_level > 3000 ? "Gas is above the safe limit of 3000" : "Gas is in the safe limit that is 3000"}
+        </Text>
     </View>
 );
 
