@@ -59,6 +59,16 @@ const LinkMotor = () => {
     
         setLoading(true);
         try {
+            // Check for duplicate names
+            const motors = await fetchMyMotors();
+            const nameExists = motors.some(m => (m.nickname || "").toLowerCase() === (nickname || "").toLowerCase());
+            
+            if (nameExists) {
+                showStatus('error', 'Conflict', `A motor named "${nickname}" already exists. Please choose a different name.`);
+                setLoading(false);
+                return;
+            }
+
             await linkMotor(hexcode, nickname || undefined);
             showStatus('success', 'SUCCESS!', 'Motor linked successfully!', () => navigate('/'));
         } catch (error) {

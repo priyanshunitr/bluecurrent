@@ -29,24 +29,19 @@ const MotorCard = ({ name, status, time, isOnline, hexcode, onPress }) => (
   <TouchableOpacity 
     style={[
       styles.cardContainer, 
-      { backgroundColor: status.includes("ON") ? '#002B00' : '#1E293B' }
+      { backgroundColor: status.includes("ON") ? '#003B00' : '#3C3C3C' }
     ]} 
     onPress={onPress}
   >
-    <View style={styles.cardTopRow}>
-      <View style={styles.infoCol}>
-        <Text style={styles.cardTitle}>{name}</Text>
-        <Text style={styles.hexText}>#{hexcode}</Text>
-      </View>
-      <View style={[styles.badge, { backgroundColor: isOnline ? '#B9F6CA' : '#FF8A80' }]}>
-        <Text style={[styles.badgeText, { color: isOnline ? '#004D40' : '#D32F2F' }]}>
-          {isOnline ? 'ONLINE' : 'OFFLINE'}
-        </Text>
-      </View>
+    <View style={styles.connectionRow}>
+       <View style={[styles.connectionBadgeMini, { backgroundColor: isOnline ? '#16A34A' : '#af0303ff' }]}>
+         <Text style={styles.connectionTextMini}>{isOnline ? 'ONLINE' : 'OFFLINE'}</Text>
+       </View>
     </View>
-
+    <Text style={styles.cardTitle}>{name}</Text>
+    <Text style={styles.hexText}>#{hexcode}</Text>
     <View style={styles.statusRow}>
-      <View style={[styles.statusDot, { backgroundColor: status.includes("ON") ? '#00C853' : '#94A3B8' }]} />
+      <View style={[styles.statusDot, { backgroundColor: status.includes("ON") ? '#16A34A' : '#94A3B8' }]} />
       <Text style={styles.statusText}>
         {status} {time}
       </Text>
@@ -220,60 +215,50 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   cardContainer: {
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 12,
+    padding: 24,
     marginBottom: 16,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-  },
-  cardTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 20,
-  },
-  infoCol: {
-    flex: 1,
   },
   cardTitle: {
     color: '#FFFFFF',
-    fontSize: 22,
-    fontWeight: '800',
+    fontSize: 18,
+    fontWeight: '700',
     marginBottom: 4,
   },
   hexText: {
-    color: '#94A3B8',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  badge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    marginLeft: 10,
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: '900',
-    letterSpacing: 0.5,
+    color: '#A1A1A1',
+    fontSize: 14,
+    marginBottom: 16,
   },
   statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   statusDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    marginRight: 10,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 8,
   },
   statusText: {
-    color: '#E2E8F0',
-    fontSize: 15,
-    fontWeight: '600',
+    color: '#FFFFFF',
+    fontSize: 14,
+  },
+  connectionRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginBottom: -10,
+    marginTop: -10,
+  },
+  connectionBadgeMini: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  connectionTextMini: {
+    color: '#FFFFFF',
+    fontSize: 8,
+    fontWeight: '800',
   },
   footerContainer: {
     paddingVertical: 20,

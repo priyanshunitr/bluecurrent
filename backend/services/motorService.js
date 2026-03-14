@@ -139,7 +139,16 @@ export const getMotorStatus = async (username, hexcode) => {
     }
 
     const { gas_level, current_on, starttime, motorTurnOffTime, schedules, nickname, last_seen } = data;
-    const isOnline = last_seen ? (Date.now() - last_seen.toMillis() < 20000) : false; // Online if seen in last 20s
+    
+    const now = admin.firestore.Timestamp.now().toMillis();
+    const lastSeenMillis = last_seen ? last_seen.toMillis() : 0;
+    const diff = now - lastSeenMillis;
+    
+    // Increased threshold to 60 seconds for better reliability
+    const isOnline = lastSeenMillis > 0 && diff < 60000; 
+
+    console.log(`[Status Check] Motor ${hexcode}: Last seen ${diff/1000}s ago. Online: ${isOnline}`);
+
     return { 
         hexcode, 
         gas_level, 
