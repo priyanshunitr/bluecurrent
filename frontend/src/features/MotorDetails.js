@@ -37,6 +37,8 @@ const MotorDetails = () => {
         visible: false,
         title: '',
         message: '',
+        confirmText: 'Confirm',
+        type: 'danger',
         onConfirm: null
     });
 
@@ -107,22 +109,43 @@ const MotorDetails = () => {
         if (!motorData || actionLoading) return;
         const newState = !motorData.current_on;
         
-        if (newState === true && motorData.gas_level > 3000) {
-            showStatus('error', 'Alert', "Motor can't be turned ON as the gas value is above 3000");
-            return;
-        }
+        // Validation for turning ON
+        if (newState === true) {
+            if (motorData.gas_level > 3000) {
+                showStatus('error', 'Alert', "Motor can't be turned ON as the gas value is above 3000");
+                return;
+            }
 
-        const normalizedDuration = typeof forcedDuration === 'number' ? forcedDuration : -1;
-        if (newState === true && normalizedDuration === -1) {
-            setShowTimerModal(true);
-            return;
+            const normalizedDuration = typeof forcedDuration === 'number' ? forcedDuration : -1;
+            if (normalizedDuration === -1) {
+                setShowTimerModal(true);
+                return;
+            }
+
+            // Execute turning ON
+            executeToggle(true, normalizedDuration);
+        } else {
+            // Confirmation for turning OFF
+            setConfirmModal({
+                visible: true,
+                title: 'Turn Off Motor',
+                message: `Are you sure you want to turn off "${motorData?.nickname || 'this motor'}"?`,
+                confirmText: 'Turn Off',
+                type: 'danger',
+                onConfirm: async () => {
+                    setConfirmModal(prev => ({ ...prev, visible: false }));
+                    executeToggle(false, 0);
+                }
+            });
         }
+    };
+
+    const executeToggle = async (newState, duration) => {
         setActionLoading(true);
         setShowTimerModal(false);
-        const finalDuration = normalizedDuration === -1 ? 0 : normalizedDuration;
         setMotorData(prev => ({ ...prev, current_on: newState }));
         try {
-            await toggleMotorState(hexcode, newState, finalDuration);
+            await toggleMotorState(hexcode, newState, duration);
             await loadMotorData();
         } catch (error) {
             showStatus('error', 'Control Error', error.message);
@@ -225,6 +248,8 @@ const MotorDetails = () => {
             visible: true,
             title: 'Remove Motor',
             message: `Are you sure you want to remove "${motorData?.nickname || 'this motor'}"?\n\nThis will unlink it from your account permanently.`,
+            confirmText: 'Remove',
+            type: 'danger',
             onConfirm: async () => {
                 setConfirmModal(prev => ({ ...prev, visible: false }));
                 setUnlinking(true);
@@ -280,7 +305,8 @@ const MotorDetails = () => {
             visible={confirmModal.visible}
             title={confirmModal.title}
             message={confirmModal.message}
-            confirmText="Remove"
+            confirmText={confirmModal.confirmText}
+            type={confirmModal.type}
             onConfirm={confirmModal.onConfirm}
             onCancel={() => setConfirmModal(prev => ({ ...prev, visible: false }))}
           />
