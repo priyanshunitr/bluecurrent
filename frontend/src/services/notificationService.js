@@ -47,7 +47,7 @@ export const showMotorOnNotification = async (hexcode, nickname, starttime) => {
             body: `The motor "${nickname}" has been running since ${timeStr}.`,
             android: {
                 channelId: CHANNEL_ID,
-                ongoing: true,
+                ongoing: true, // This prevents the user from swiping it away
                 autoCancel: false,
                 smallIcon: 'ic_launcher',
                 color: '#16A34A',

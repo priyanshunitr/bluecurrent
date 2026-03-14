@@ -1,14 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { NativeRouter, Route, Routes, useNavigate } from 'react-router-native';
-import {
-  StatusBar,
-  StyleSheet,
-  useColorScheme,
-  View,
-  TouchableOpacity,
-  Text,
-  ScrollView,
-} from 'react-native';
+import React, { useEffect } from 'react';
+import { NativeRouter, Route, Routes, useNavigate, useLocation } from 'react-router-native';
+import { StatusBar, useColorScheme, BackHandler } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Timer from './src/features/Timer';
 import Schedule from './src/features/Schedule';
@@ -32,6 +24,30 @@ const AuthListener = () => {
   return null;
 };
 
+const BackButtonHandler = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const onBackPress = () => {
+      if (location.pathname === '/' || location.pathname === '/login') {
+        return false;
+      }
+      navigate(-1);
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      onBackPress
+    );
+
+    return () => backHandler.remove();
+  }, [location, navigate]);
+
+  return null;
+};
+
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
 
@@ -39,6 +55,7 @@ function App() {
     <SafeAreaProvider>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <NativeRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <BackButtonHandler />
         <AuthListener />
         <Routes>
           <Route path="/" element={<Home />} />
