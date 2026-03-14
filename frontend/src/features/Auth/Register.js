@@ -46,6 +46,23 @@ const Register = () => {
             return;
         }
 
+        // Basic validations
+        if (username.length < 3) {
+            showStatus('error', 'Invalid Username', 'Username must be at least 3 characters long');
+            return;
+        }
+
+        const phoneRegex = /^[0-9]{10}$/;
+        if (!phoneRegex.test(phone)) {
+            showStatus('error', 'Invalid Phone', 'Please enter a valid 10-digit phone number');
+            return;
+        }
+
+        if (password.length < 6) {
+            showStatus('error', 'Weak Password', 'Password must be at least 6 characters long');
+            return;
+        }
+
         setLoading(true);
         try {
             await registerUser(username, password, phone);
@@ -100,8 +117,9 @@ const Register = () => {
                                 placeholder="Phone Number"
                                 placeholderTextColor="#94A3B8"
                                 value={phone}
-                                onChangeText={setPhone}
+                                onChangeText={(text) => setPhone(text.replace(/[^0-9]/g, ''))}
                                 keyboardType="phone-pad"
+                                maxLength={10}
                             />
                         </View>
 
