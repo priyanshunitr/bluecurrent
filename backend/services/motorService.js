@@ -138,8 +138,19 @@ export const getMotorStatus = async (username, hexcode) => {
         throw err;
     }
 
-    const { gas_level, current_on, starttime, motorTurnOffTime, schedules, nickname } = data;
-    return { hexcode, gas_level, current_on, starttime, motorTurnOffTime, schedules: schedules || [], nickname };
+    const { gas_level, current_on, starttime, motorTurnOffTime, schedules, nickname, last_seen } = data;
+    const isOnline = last_seen ? (Date.now() - last_seen.toMillis() < 20000) : false; // Online if seen in last 20s
+    return { 
+        hexcode, 
+        gas_level, 
+        current_on, 
+        starttime, 
+        motorTurnOffTime, 
+        schedules: schedules || [], 
+        nickname,
+        isOnline,
+        last_seen
+    };
 };
 
 /**
@@ -151,7 +162,10 @@ export const getMotorStatus = async (username, hexcode) => {
  */
 export const updateGasLevel = async (hexcode, gas_level) => {
     await getMotorDoc(hexcode); // validates existence
-    await db.collection(MOTORS_COLLECTION).doc(hexcode).update({ gas_level });
+    await db.collection(MOTORS_COLLECTION).doc(hexcode).update({ 
+        gas_level,
+        last_seen: admin.firestore.Timestamp.now() 
+    });
 };
 
 /**

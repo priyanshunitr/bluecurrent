@@ -380,6 +380,7 @@ const MotorDetails = () => {
           ) : (
             <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 <MotorStatusCard 
+                    isOnline={motorData.isOnline}
                     name={motorData.nickname || "Motor 1"}
                     isOn={motorData.current_on} 
                     starttime={motorData.starttime} 
@@ -593,8 +594,15 @@ const MotorHeader = ({ onBack, displayHex, name, onNotificationPress, hasNewNoti
     </View>
 );
 
-const MotorStatusCard = ({ name = "Motor 1", isOn, starttime, nextOffText, onToggle, loading, gasValue }) => (
+const MotorStatusCard = ({ name = "Motor 1", isOn, starttime, nextOffText, onToggle, loading, gasValue, isOnline }) => (
     <View style={[styles.cardContainer, { backgroundColor: isOn ? '#003B00' : '#3C3C3C' }]}>
+        <View style={styles.cardHeaderRow}>
+            <View style={[styles.connectionBadge, { backgroundColor: isOnline ? '#B9F6CA' : '#FF8A80' }]}>
+                <Text style={[styles.connectionText, { color: isOnline ? '#004D40' : '#D32F2F' }]}>
+                    {isOnline ? 'ONLINE' : 'OFFLINE'}
+                </Text>
+            </View>
+        </View>
         <View style={styles.cardContentRow}>
             <View style={styles.cardLeftColumn}>
                 <Text style={styles.cardTitle}>{name}</Text>
@@ -640,7 +648,7 @@ const ScheduleForm = ({
     const hoursArr = Array.from({length: 12}, (_, i) => i + 1);
     const minsArr = Array.from({length: 60}, (_, i) => i);
     const runHArr = Array.from({length: 13}, (_, i) => i);
-    const runMArr = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+    const runMArr = Array.from({length: 60}, (_, i) => i);
 
     return (
         <View style={styles.formCard}>
@@ -1194,6 +1202,217 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '700',
+  },
+  pickersContainer: {
+    flexDirection: 'row',
+    height: 120, // Reduced height for tighter look
+    width: '100%',
+    justifyContent: 'space-around',
+    marginBottom: 40,
+    position: 'relative',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  pickerIndicator: {
+    position: 'absolute',
+    top: 38, // (120 - 44) / 2
+    left: 0,
+    right: 0,
+    height: 44,
+    backgroundColor: '#1E293B',
+    borderRadius: 12,
+    opacity: 0.8,
+  },
+  wheelWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+  wheelItem: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  wheelItemText: {
+    color: '#64748B',
+    fontSize: 20,
+    fontWeight: '500',
+  },
+  wheelItemTextActive: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  wheelLabel: {
+    color: '#94A3B8',
+    fontSize: 10,
+    fontWeight: '700',
+    marginTop: 2,
+    letterSpacing: 0.5,
+  },
+  startWithTimerBtn: {
+    backgroundColor: '#149644',
+    width: '100%',
+    height: 56,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  startWithTimerText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  startWithoutTimerBtn: {
+    width: '100%',
+    height: 56,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#149644',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  startWithoutTimerText: {
+    color: '#149644',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  closeModalBtn: {
+      position: 'absolute',
+      top: 24,
+      right: 24,
+  },
+  expandBtn: {
+      backgroundColor: '#0A203F',
+      height: 56,
+      borderRadius: 12,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 20,
+      marginBottom: 16,
+  },
+  expandBtnActive: {
+      backgroundColor: '#FFFFFF',
+      borderColor: '#E2E8F0',
+  },
+  expandBtnText: {
+      color: '#FFFFFF',
+      fontSize: 16,
+      fontWeight: '600',
+      flex: 1,
+      marginLeft: 12,
+    },
+  expandBtnTextActive: {
+      color: '#0A203F',
+  },
+  // Motor Action Styles (Rename & Remove)
+  actionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingTop: 10,
+    marginBottom: 20,
+  },
+  actionBtnRename: {
+    backgroundColor: '#0A203F',
+    flex: 1,
+    height: 56,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  actionBtnRemove: {
+    backgroundColor: '#af0303ff',
+    flex: 1,
+    height: 56,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  actionBtnText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  // Rename Modal Styles
+  modalOverlayCentered: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  renameModalContent: {
+    backgroundColor: '#FFFFFF',
+    width: '100%',
+    padding: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  renameTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 20,
+  },
+  renameInput: {
+    width: '100%',
+    height: 54,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: '#0F172A',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 24,
+  },
+  renameActions: {
+    flexDirection: 'row',
+    width: '100%',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  cancelBtn: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    marginRight: 8,
+  },
+  cancelBtnText: {
+    color: '#64748B',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  saveBtn: {
+    backgroundColor: '#0A203F',
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+    borderRadius: 12,
+    minWidth: 100,
+    alignItems: 'center',
+  },
+  saveBtnText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  cardHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginBottom: 12,
+  },
+  connectionBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  connectionText: {
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   }
 });
 
