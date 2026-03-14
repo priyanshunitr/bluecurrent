@@ -14,6 +14,12 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'bluecurrent_secret_key_123';
 app.use(cors());
 app.use(express.json());
 
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`[${new Date().toLocaleTimeString()}] ${req.method} ${req.url}`);
+  next();
+});
+
 // ─── Routes ──────────────────────────────────────────────────────────────────
 app.get('/', (_req, res) => {
   res.json({ message: 'BlueCurrent API is running.' });

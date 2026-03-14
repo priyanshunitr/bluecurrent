@@ -106,6 +106,26 @@ export const unlinkMotor = async (username, hexcode) => {
 };
 
 /**
+ * Helper to calculate online status and attach hexcode from doc.id
+ */
+const processMotorData = (doc) => {
+    const data = doc.data();
+    const now = admin.firestore.Timestamp.now().toMillis();
+    const lastSeenMillis = data.last_seen ? data.last_seen.toMillis() : 0;
+    const diff = now - lastSeenMillis;
+    
+    // threshold: 60 seconds
+    const isOnline = lastSeenMillis > 0 && diff < 60000; 
+
+    return { 
+        ...data,
+        hexcode: doc.id,
+        isOnline,
+        last_seen_diff: diff / 1000 // Helpful for debugging
+    };
+};
+
+/**
  * Returns all motors linked to the given user.
  *
  * @param {string} username
@@ -117,7 +137,7 @@ export const getMotorsByUser = async (username) => {
         .where('user_conn', '==', username)
         .get();
 
-    return snapshot.docs.map((doc) => doc.data());
+    return snapshot.docs.map(processMotorData);
 };
 
 /**
@@ -138,28 +158,7 @@ export const getMotorStatus = async (username, hexcode) => {
         throw err;
     }
 
-    const { gas_level, current_on, starttime, motorTurnOffTime, schedules, nickname, last_seen } = data;
-    
-    const now = admin.firestore.Timestamp.now().toMillis();
-    const lastSeenMillis = last_seen ? last_seen.toMillis() : 0;
-    const diff = now - lastSeenMillis;
-    
-    // Increased threshold to 60 seconds for better reliability
-    const isOnline = lastSeenMillis > 0 && diff < 60000; 
-
-    console.log(`[Status Check] Motor ${hexcode}: Last seen ${diff/1000}s ago. Online: ${isOnline}`);
-
-    return { 
-        hexcode, 
-        gas_level, 
-        current_on, 
-        starttime, 
-        motorTurnOffTime, 
-        schedules: schedules || [], 
-        nickname,
-        isOnline,
-        last_seen
-    };
+    return processMotorData(snapshot);
 };
 
 /**
