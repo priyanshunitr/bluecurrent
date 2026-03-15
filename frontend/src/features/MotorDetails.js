@@ -621,7 +621,9 @@ const MotorStatusCard = ({ name = "Motor 1", isOn, starttime, nextOffText, onTog
             <View style={styles.cardLeftColumn}>
                 <View style={styles.cardTitleRow}>
                     <Text style={styles.cardTitle}>{name}</Text>
-                    <View style={[styles.connectionDot, { backgroundColor: isOnline ? '#16A34A' : '#af0303ff' }]} />
+                    <View style={[styles.connectionBadgeMini, { backgroundColor: isOnline ? '#16A34A' : '#af0303ff' }]}>
+                        <Text style={styles.connectionTextMini}>{isOnline ? 'ONLINE' : 'OFFLINE'}</Text>
+                    </View>
                 </View>
                 <View style={styles.statusRow}>
                     <View style={[styles.statusDot, { backgroundColor: isOn ? '#16A34A' : '#94A3B8' }]} />
@@ -1221,7 +1223,18 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   cardTitleRow: { flexDirection: 'row', alignItems: 'center' },
-  connectionDot: { width: 10, height: 10, borderRadius: 5, marginLeft: 10 },
+  connectionBadgeMini: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginLeft: 10,
+  },
+  connectionTextMini: {
+    color: '#FFFFFF',
+    fontSize: 8,
+    fontWeight: '800',
+    fontFamily: 'Aeros',
+  },
 });
 
 export default MotorDetails;
