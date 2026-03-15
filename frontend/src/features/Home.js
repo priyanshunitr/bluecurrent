@@ -74,6 +74,14 @@ const Home = () => {
     createNotificationChannel();
     loadMotors();
     checkNotifications();
+
+    // Poll for status updates every 7 seconds to keep the ONLINE/OFFLINE status fresh
+    // since the offline threshold was reduced to 10s
+    const pollInterval = setInterval(() => {
+      loadMotors();
+    }, 7000);
+
+    return () => clearInterval(pollInterval);
   }, []);
 
   const onRefresh = async () => {

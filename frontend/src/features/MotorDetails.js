@@ -114,7 +114,9 @@ const MotorDetails = () => {
     useEffect(() => {
       loadMotorData();
       checkNotifications();
-      const interval = setInterval(loadMotorData, 10000);
+      // Reduced interval to 5s for better responsiveness 
+      // since the offline threshold is now 10s
+      const interval = setInterval(loadMotorData, 5000);
       return () => clearInterval(interval);
     }, [hexcode]);
   
