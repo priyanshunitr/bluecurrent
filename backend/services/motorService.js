@@ -350,9 +350,6 @@ export const getDeviceStatus = async (hexcode) => {
 
     const { current_on, motorTurnOffTime } = snapshot.data();
     
-    // Update heartbeat on every status check
-    await docRef.update({ last_seen: admin.firestore.Timestamp.now() });
-
     return {
         hexcode,
         current_on: current_on ?? false,

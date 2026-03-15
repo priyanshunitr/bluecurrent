@@ -41,6 +41,6 @@ app.use((err, _req, res, _next) => {
 
 // ─── Start Server + Scheduler ─────────────────────────────────────────────────
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`[Startup] BlueCurrent Backend server running on port ${PORT}`);
   startScheduler(5000); // tick every 5 seconds
 });
