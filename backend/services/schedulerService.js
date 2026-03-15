@@ -79,9 +79,18 @@ const processMotor = (data, now) => {
 
         // If motor is offline, don't turn it on — flag it as missed
         if (data.isOnline === false) {
+            // Only update if we haven't already flagged this schedule in THIS minute
+            const lastMissed = data.missedScheduleTimestamp && typeof data.missedScheduleTimestamp.toMillis === 'function' 
+                ? data.missedScheduleTimestamp.toMillis() 
+                : 0;
+            const alreadyFlaggedThisMinute = (now.getTime() - lastMissed) < 60000;
+
+            if (data.lastTriggeredScheduleId === s.id && alreadyFlaggedThisMinute) continue;
+
             console.log(`[Scheduler] Motor "${data.hexcode}" is OFFLINE. Skipping schedule "${s.id}".`);
             updates.missedScheduleReason = `offline`;
             updates.lastTriggeredScheduleId = s.id;
+            updates.missedScheduleTimestamp = admin.firestore.Timestamp.fromDate(now);
             changed = true;
 
             if (s.type === 'particular') {

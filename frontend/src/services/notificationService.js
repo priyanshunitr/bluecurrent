@@ -8,6 +8,8 @@ const NOTIFICATION_HISTORY_KEY = '@notification_history';
 // Keep track of which motors currently have a displayed "ON" notification in this session
 // Maps hexcode → nickname so we always have the name available for the OFF notification
 const activeNotificationMap = new Map();
+// Track which motors we've already shown a missed schedule notification for
+const shownMissedNotifications = new Set();
 
 /**
  * Creates the notification channel and requests permission (Android 13+).
@@ -207,30 +209,37 @@ export const syncMotorNotifications = async (motors, isPartialList = false) => {
 
             // Check if a schedule was missed because the motor was offline
             if (motor.missedScheduleReason === 'offline') {
-                const nickname = motor.nickname || `Motor ${motor.hexcode}`;
-                const title = `${nickname} - Schedule Missed`;
-                const body = `"${nickname}" couldn't be turned ON because it is offline.`;
+                const missedKey = `${motor.hexcode}-${motor.lastTriggeredScheduleId || 'unknown'}`;
+                if (!shownMissedNotifications.has(missedKey)) {
+                    shownMissedNotifications.add(missedKey);
+                    
+                    const nickname = motor.nickname || `Motor ${motor.hexcode}`;
+                    const title = `${nickname} - Schedule Missed`;
+                    const body = `"${nickname}" couldn't be turned ON because it is offline.`;
 
-                await saveToHistory(title, body, 'missed_schedule', motor.hexcode);
+                    await saveToHistory(title, body, 'missed_schedule', motor.hexcode);
 
-                await notifee.displayNotification({
-                    id: `missed-${motor.hexcode}-${Date.now()}`,
-                    title,
-                    body,
-                    android: {
-                        channelId: CHANNEL_ID,
-                        smallIcon: 'ic_launcher',
-                        color: '#EF4444',
-                        pressAction: { id: 'default' },
-                    },
-                });
+                    await notifee.displayNotification({
+                        id: `missed-${motor.hexcode}`,
+                        title,
+                        body,
+                        android: {
+                            channelId: CHANNEL_ID,
+                            smallIcon: 'ic_launcher',
+                            color: '#EF4444',
+                            pressAction: { id: 'default' },
+                        },
+                    });
 
-                // Clear the flag in Firestore so it doesn't repeat
-                try {
-                    const { clearMissedScheduleFlag } = require('./api');
-                    await clearMissedScheduleFlag(motor.hexcode);
-                } catch (e) {
-                    console.warn('Could not clear missed schedule flag:', e);
+                    // Clear the flag in Firestore so it doesn't repeat
+                    try {
+                        const api = require('./api');
+                        if (api && api.clearMissedScheduleFlag) {
+                            await api.clearMissedScheduleFlag(motor.hexcode);
+                        }
+                    } catch (e) {
+                        console.warn('Could not clear missed schedule flag:', e);
+                    }
                 }
             }
         }

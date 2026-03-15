@@ -367,6 +367,7 @@ export const clearMissedScheduleFlag = async (username, hexcode) => {
 
     await db.collection(MOTORS_COLLECTION).doc(hexcode).update({
         missedScheduleReason: admin.firestore.FieldValue.delete(),
+        missedScheduleTimestamp: admin.firestore.FieldValue.delete(),
     });
 
     return { hexcode, message: 'Missed schedule flag cleared.' };
