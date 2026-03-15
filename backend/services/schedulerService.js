@@ -105,7 +105,7 @@ const processMotor = (data, now) => {
         updates.lastTriggeredScheduleId = s.id; // Mark this ID as triggered
 
         if (s.duration && s.duration > 0) {
-            newMotorTurnOffTime = admin.firestore.Timestamp.fromMillis(now.getTime() + s.duration * 10000);
+            newMotorTurnOffTime = admin.firestore.Timestamp.fromMillis(now.getTime() + s.duration * 60000);
         } else {
             newMotorTurnOffTime = null;
         }

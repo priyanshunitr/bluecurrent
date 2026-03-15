@@ -114,7 +114,7 @@ const processMotorData = (doc) => {
     const lastSeenMillis = data.last_seen ? data.last_seen.toMillis() : 0;
     const diff = now - lastSeenMillis;
     
-    // threshold: 60 seconds
+    // threshold: 10 seconds
     const isOnline = lastSeenMillis > 0 && diff < 10000; 
 
     return { 
@@ -269,7 +269,7 @@ export const updateMotorState = async (hexcode, motor, duration) => {
         updates.starttime = admin.firestore.Timestamp.now();
 
         if (duration && duration > 0) {
-            updates.motorTurnOffTime = admin.firestore.Timestamp.fromMillis(nowMillis + duration * 10000); // minutes → ms
+            updates.motorTurnOffTime = admin.firestore.Timestamp.fromMillis(nowMillis + duration * 60000); // minutes → ms
         } else {
             updates.motorTurnOffTime = null; // no timer
         }
@@ -279,7 +279,8 @@ export const updateMotorState = async (hexcode, motor, duration) => {
         // starttime stays as-is (last recorded ON time)
     }
 
-    updates.last_seen = admin.firestore.Timestamp.now();
+    // updates.last_seen removed here because this may be a command from user. 
+    // last_seen is updated via gas updates and device-status polling.
     await db.collection(MOTORS_COLLECTION).doc(hexcode).update(updates);
 
     return {
@@ -350,6 +351,9 @@ export const getDeviceStatus = async (hexcode) => {
 
     const { current_on, motorTurnOffTime } = snapshot.data();
     
+    // Polling this endpoint counts as a heartbeat
+    await docRef.update({ last_seen: admin.firestore.Timestamp.now() });
+
     return {
         hexcode,
         current_on: current_on ?? false,
