@@ -19,6 +19,7 @@ import {
     getSchedules,
     updateSchedules,
     getDeviceStatus,
+    clearMissedScheduleFlag,
 } from '../services/motorService.js';
 
 const router = Router();
@@ -290,6 +291,20 @@ router.get('/:hexcode/gas/stream', verifyToken, async (req, res) => {
 
     // ── Detach listener + heartbeat when client closes the connection ──────
     req.on('close', cleanup);
+});
+
+// ─── PUT /motors/:hexcode/clear-missed ────────────────────────────────────────
+/**
+ * Clears the missedScheduleReason flag after the app has shown the notification.
+ * Requires: Authorization: Bearer <token>
+ */
+router.put('/:hexcode/clear-missed', verifyToken, async (req, res) => {
+    try {
+        const result = await clearMissedScheduleFlag(req.user.username, req.params.hexcode);
+        return res.status(200).json(result);
+    } catch (err) {
+        return res.status(err.statusCode || 500).json({ error: err.message });
+    }
 });
 
 export default router;

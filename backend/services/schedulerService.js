@@ -77,6 +77,19 @@ const processMotor = (data, now) => {
         // (Prevents pulsing every 30s during the same minute)
         if (data.current_on === true && data.lastTriggeredScheduleId === s.id) continue;
 
+        // If motor is offline, don't turn it on — flag it as missed
+        if (data.isOnline === false) {
+            console.log(`[Scheduler] Motor "${data.hexcode}" is OFFLINE. Skipping schedule "${s.id}".`);
+            updates.missedScheduleReason = `offline`;
+            updates.lastTriggeredScheduleId = s.id;
+            changed = true;
+
+            if (s.type === 'particular') {
+                updatedSchedules = updatedSchedules.filter((sch) => sch.id !== s.id);
+            }
+            continue;
+        }
+
         console.log(`[Scheduler] Triggering "${s.id}" for "${data.hexcode}" at ${now.toISOString()}`);
         newMotorState = true;
         changed = true;

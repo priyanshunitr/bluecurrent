@@ -346,3 +346,28 @@ export const getDeviceStatus = async (hexcode) => {
         motorTurnOffTime: motorTurnOffTime ? motorTurnOffTime.toMillis() : null
     };
 };
+
+/**
+ * Clears the missedScheduleReason flag on a motor after the app
+ * has shown the corresponding notification.
+ *
+ * @param {string} username
+ * @param {string} hexcode
+ * @returns {Promise<{ hexcode: string, message: string }>}
+ */
+export const clearMissedScheduleFlag = async (username, hexcode) => {
+    const snapshot = await getMotorDoc(hexcode);
+    const data = snapshot.data();
+
+    if (data.user_conn !== username) {
+        const err = new Error('You do not have access to this motor.');
+        err.statusCode = 403;
+        throw err;
+    }
+
+    await db.collection(MOTORS_COLLECTION).doc(hexcode).update({
+        missedScheduleReason: admin.firestore.FieldValue.delete(),
+    });
+
+    return { hexcode, message: 'Missed schedule flag cleared.' };
+};

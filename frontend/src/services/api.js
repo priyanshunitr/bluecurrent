@@ -220,3 +220,17 @@ export const updateSchedules = async (hexcode, schedules) => {
         throw error;
     }
 };
+
+export const clearMissedScheduleFlag = async (hexcode) => {
+    try {
+        const response = await authenticatedFetch(`/motors/${hexcode}/clear-missed`, {
+            method: 'PUT',
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Failed to clear missed flag');
+        return data;
+    } catch (error) {
+        console.error('Clear Missed Flag Error:', error);
+        throw error;
+    }
+};

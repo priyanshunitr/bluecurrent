@@ -204,6 +204,35 @@ export const syncMotorNotifications = async (motors, isPartialList = false) => {
                     motor.starttime,
                 );
             }
+
+            // Check if a schedule was missed because the motor was offline
+            if (motor.missedScheduleReason === 'offline') {
+                const nickname = motor.nickname || `Motor ${motor.hexcode}`;
+                const title = `${nickname} - Schedule Missed`;
+                const body = `"${nickname}" couldn't be turned ON because it is offline.`;
+
+                await saveToHistory(title, body, 'missed_schedule', motor.hexcode);
+
+                await notifee.displayNotification({
+                    id: `missed-${motor.hexcode}-${Date.now()}`,
+                    title,
+                    body,
+                    android: {
+                        channelId: CHANNEL_ID,
+                        smallIcon: 'ic_launcher',
+                        color: '#EF4444',
+                        pressAction: { id: 'default' },
+                    },
+                });
+
+                // Clear the flag in Firestore so it doesn't repeat
+                try {
+                    const { clearMissedScheduleFlag } = require('./api');
+                    await clearMissedScheduleFlag(motor.hexcode);
+                } catch (e) {
+                    console.warn('Could not clear missed schedule flag:', e);
+                }
+            }
         }
 
         // Handle motors that were turned off

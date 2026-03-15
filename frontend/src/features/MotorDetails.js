@@ -463,16 +463,18 @@ const MotorDetails = () => {
 
 // --- Sub-components for MotorDetails ---
 
-const CustomToggle = ({ isOn, onToggle, loading }) => (
+const CustomToggle = ({ isOn, onToggle, loading, isOnline = true }) => {
+  const disabled = loading || !isOnline;
+  return (
   <TouchableOpacity
     activeOpacity={1}
     onPress={onToggle}
-    disabled={loading}
+    disabled={disabled}
     style={[
       styles.toggleTrack, 
       { 
         backgroundColor: '#F1F5F9', // Light track for both
-        opacity: loading ? 0.6 : 1,
+        opacity: disabled ? 0.6 : 1,
         borderWidth: 1,
         borderColor: '#E2E8F0',
       }
@@ -491,7 +493,8 @@ const CustomToggle = ({ isOn, onToggle, loading }) => (
       }
     ]} />
   </TouchableOpacity>
-);
+  );
+};
 
 const GasGauge = ({ gas_level }) => {
     // Max possible gas value is 4095
@@ -633,13 +636,18 @@ const MotorStatusCard = ({ name = "Motor 1", isOn, starttime, nextOffText, onTog
                 </View>
             </View>
             <View style={styles.cardRightColumn}>
-                <CustomToggle isOn={isOn} onToggle={onToggle} loading={loading} />
+                <CustomToggle isOn={isOn} onToggle={onToggle} loading={loading} isOnline={isOnline} />
             </View>
         </View>
         {nextOffText ? <Text style={styles.scheduledText}>{nextOffText}</Text> : null}
         {gasValue > 3000 && (
             <Text style={[styles.scheduledText, { color: '#af0303ff', marginTop: nextOffText ? 12 : 20 }]}>
                 Motor can't be turned ON as the gas value is above 3000
+            </Text>
+        )}
+        {!isOnline && (
+            <Text style={[styles.scheduledText, { color: '#af0303ff', marginTop: (nextOffText || gasValue > 3000) ? 12 : 20 }]}>
+                Device can't be turned ON because it is offline
             </Text>
         )}
     </View>
@@ -654,7 +662,7 @@ const GasGaugeCard = ({ gas_level }) => (
                 <Text style={styles.gasValue}>{gas_level ?? 'N/A'}</Text>
             </View>
         </View>
-        <Text style={[styles.gasFooterText, gas_level > 3000 && { color: '#af0303ff' }]}>
+        <Text style={[styles.gasFooterText, gas_level > 3000 && { color: '#dd3d3dff' }]}>
             {gas_level > 3000 ? "Gas is above the safe limit of 3000" : "Gas is in the safe limit that is 3000"}
         </Text>
     </View>
@@ -667,7 +675,7 @@ const ScheduleForm = ({
     const hoursArr = Array.from({length: 12}, (_, i) => i + 1);
     const minsArr = Array.from({length: 60}, (_, i) => i);
     const runHArr = Array.from({length: 13}, (_, i) => i);
-    const runMArr = Array.from({length: 60}, (_, i) => i);
+    const runMArr = Array.from({length: 59}, (_, i) => i + 1);
 
     return (
         <View style={styles.formCard}>
