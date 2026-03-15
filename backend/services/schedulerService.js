@@ -83,7 +83,7 @@ const processMotor = (data, now) => {
             const lastMissed = data.missedScheduleTimestamp && typeof data.missedScheduleTimestamp.toMillis === 'function' 
                 ? data.missedScheduleTimestamp.toMillis() 
                 : 0;
-            const alreadyFlaggedThisMinute = (now.getTime() - lastMissed) < 60000;
+            const alreadyFlaggedThisMinute = (now.getTime() - lastMissed) < 10000;
 
             if (data.lastTriggeredScheduleId === s.id && alreadyFlaggedThisMinute) continue;
 
@@ -105,7 +105,7 @@ const processMotor = (data, now) => {
         updates.lastTriggeredScheduleId = s.id; // Mark this ID as triggered
 
         if (s.duration && s.duration > 0) {
-            newMotorTurnOffTime = admin.firestore.Timestamp.fromMillis(now.getTime() + s.duration * 60000);
+            newMotorTurnOffTime = admin.firestore.Timestamp.fromMillis(now.getTime() + s.duration * 10000);
         } else {
             newMotorTurnOffTime = null;
         }
@@ -151,7 +151,7 @@ export const runSchedulerTick = async () => {
             const lastSeenMillis = rawData.last_seen && typeof rawData.last_seen.toMillis === 'function'
                 ? rawData.last_seen.toMillis()
                 : 0;
-            const isOnline = lastSeenMillis > 0 && (now.getTime() - lastSeenMillis) < 60000;
+            const isOnline = lastSeenMillis > 0 && (now.getTime() - lastSeenMillis) < 10000;
 
             const data = { hexcode: doc.id, ...rawData, isOnline };
             const { updates, changed } = processMotor(data, now);

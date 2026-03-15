@@ -115,7 +115,7 @@ const processMotorData = (doc) => {
     const diff = now - lastSeenMillis;
     
     // threshold: 60 seconds
-    const isOnline = lastSeenMillis > 0 && diff < 60000; 
+    const isOnline = lastSeenMillis > 0 && diff < 10000; 
 
     return { 
         ...data,
@@ -269,7 +269,7 @@ export const updateMotorState = async (hexcode, motor, duration) => {
         updates.starttime = admin.firestore.Timestamp.now();
 
         if (duration && duration > 0) {
-            updates.motorTurnOffTime = admin.firestore.Timestamp.fromMillis(nowMillis + duration * 60000); // minutes → ms
+            updates.motorTurnOffTime = admin.firestore.Timestamp.fromMillis(nowMillis + duration * 10000); // minutes → ms
         } else {
             updates.motorTurnOffTime = null; // no timer
         }
