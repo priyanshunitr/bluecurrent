@@ -6,8 +6,8 @@ const CHANNEL_ID = 'motor-status';
 const NOTIFICATION_HISTORY_KEY = '@notification_history';
 
 // Keep track of which motors currently have a displayed "ON" notification in this session
-// to avoid duplicate logging in the history
-const activeNotificationHexcodes = new Set();
+// Maps hexcode → nickname so we always have the name available for the OFF notification
+const activeNotificationMap = new Map();
 
 /**
  * Creates the notification channel and requests permission (Android 13+).
@@ -116,7 +116,7 @@ export const showMotorOnNotification = async (hexcode, nickname, starttime) => {
 
         // Log to history (the function itself handles deduplication)
         await saveToHistory(title, body, 'motor_on', hexcode);
-        activeNotificationHexcodes.add(hexcode);
+        activeNotificationMap.set(hexcode, nickname);
 
         await notifee.displayNotification({
             id: `motor-on-${hexcode}`,
@@ -153,7 +153,7 @@ export const cancelMotorOnNotification = async (hexcode, nickname = 'Motor') => 
         await saveToHistory(title, body, 'motor_off', hexcode);
 
         // Show a brief push notification for the OFF event if it was previously ON
-        if (activeNotificationHexcodes.has(hexcode)) {
+        if (activeNotificationMap.has(hexcode)) {
             await notifee.displayNotification({
                 id: `motor-off-${hexcode}-${Date.now()}`,
                 title,
@@ -166,7 +166,7 @@ export const cancelMotorOnNotification = async (hexcode, nickname = 'Motor') => 
                 },
             });
 
-            activeNotificationHexcodes.delete(hexcode);
+            activeNotificationMap.delete(hexcode);
         }
     } catch (error) {
         console.warn('Failed to cancel notification:', error);
@@ -186,7 +186,7 @@ export const syncMotorNotifications = async (motors, isPartialList = false) => {
             for (const n of displayed) {
                 if (n.id && n.id.startsWith('motor-on-')) {
                     const hex = n.id.replace('motor-on-', '');
-                    await cancelMotorOnNotification(hex);
+                    await cancelMotorOnNotification(hex, activeNotificationMap.get(hex) || 'Motor');
                 }
             }
             return;
@@ -247,7 +247,7 @@ export const syncMotorNotifications = async (motors, isPartialList = false) => {
                 if (!currentOnHexcodes.has(hex)) {
                     // Try to find the nickname from the current motor list
                     const m = motors.find(mt => mt.hexcode === hex);
-                    await cancelMotorOnNotification(hex, m?.nickname || 'Motor');
+                    await cancelMotorOnNotification(hex, m?.nickname || activeNotificationMap.get(hex) || `Motor ${hex}`);
                 }
             }
         }
