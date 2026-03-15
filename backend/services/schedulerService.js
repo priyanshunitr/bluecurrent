@@ -137,7 +137,14 @@ export const runSchedulerTick = async () => {
         let batchHasWrites = false;
 
         snapshot.forEach((doc) => {
-            const data = { hexcode: doc.id, ...doc.data() };
+            const rawData = doc.data();
+            // Compute isOnline from last_seen (same logic as motorService)
+            const lastSeenMillis = rawData.last_seen && typeof rawData.last_seen.toMillis === 'function'
+                ? rawData.last_seen.toMillis()
+                : 0;
+            const isOnline = lastSeenMillis > 0 && (now.getTime() - lastSeenMillis) < 60000;
+
+            const data = { hexcode: doc.id, ...rawData, isOnline };
             const { updates, changed } = processMotor(data, now);
 
             if (changed) {

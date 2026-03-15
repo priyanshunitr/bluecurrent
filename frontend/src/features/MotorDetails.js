@@ -641,12 +641,12 @@ const MotorStatusCard = ({ name = "Motor 1", isOn, starttime, nextOffText, onTog
         </View>
         {nextOffText ? <Text style={styles.scheduledText}>{nextOffText}</Text> : null}
         {gasValue > 3000 && (
-            <Text style={[styles.scheduledText, { color: '#af0303ff', marginTop: nextOffText ? 12 : 20 }]}>
+            <Text style={[styles.scheduledText, { color: '#d73b3bff', marginTop: nextOffText ? 12 : 20 }]}>
                 Motor can't be turned ON as the gas value is above 3000
             </Text>
         )}
-        {!isOnline && (
-            <Text style={[styles.scheduledText, { color: '#af0303ff', marginTop: (nextOffText || gasValue > 3000) ? 12 : 20 }]}>
+        {!isOnline && !isOn && (
+            <Text style={[styles.scheduledText, { color: '#d73b3bff', marginTop: (nextOffText || gasValue > 3000) ? 12 : 20 }]}>
                 Device can't be turned ON because it is offline
             </Text>
         )}
