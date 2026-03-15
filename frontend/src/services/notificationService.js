@@ -254,9 +254,15 @@ export const syncMotorNotifications = async (motors, isPartialList = false) => {
                 if (isPartialList && !hexcodesInList.has(hex)) continue;
 
                 if (!currentOnHexcodes.has(hex)) {
-                    // Try to find the nickname from the current motor list
                     const m = motors.find(mt => mt.hexcode === hex);
-                    await cancelMotorOnNotification(hex, m?.nickname || activeNotificationMap.get(hex) || `Motor ${hex}`);
+                    if (m) {
+                        // Motor is still in the list but turned OFF — show OFF notification
+                        await cancelMotorOnNotification(hex, m.nickname || activeNotificationMap.get(hex) || `Motor ${hex}`);
+                    } else {
+                        // Motor was removed/unlinked — silently dismiss without OFF notification
+                        await notifee.cancelNotification(`motor-on-${hex}`);
+                        activeNotificationMap.delete(hex);
+                    }
                 }
             }
         }

@@ -279,6 +279,7 @@ export const updateMotorState = async (hexcode, motor, duration) => {
         // starttime stays as-is (last recorded ON time)
     }
 
+    updates.last_seen = admin.firestore.Timestamp.now();
     await db.collection(MOTORS_COLLECTION).doc(hexcode).update(updates);
 
     return {
@@ -338,8 +339,20 @@ export const updateSchedules = async (username, hexcode, schedules) => {
  * @returns {Promise<Object>} { hexcode, current_on, motorTurnOffTime }
  */
 export const getDeviceStatus = async (hexcode) => {
-    const snapshot = await getMotorDoc(hexcode);
+    const docRef = db.collection(MOTORS_COLLECTION).doc(hexcode);
+    const snapshot = await docRef.get();
+    
+    if (!snapshot.exists) {
+        const err = new Error(`Motor with hexcode "${hexcode}" not found.`);
+        err.statusCode = 404;
+        throw err;
+    }
+
     const { current_on, motorTurnOffTime } = snapshot.data();
+    
+    // Update heartbeat on every status check
+    await docRef.update({ last_seen: admin.firestore.Timestamp.now() });
+
     return {
         hexcode,
         current_on: current_on ?? false,
